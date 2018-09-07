@@ -1,19 +1,15 @@
-import configparser
 import json
 import math
 import multiprocessing as mp
-from ctypes import Structure, c_double
 
 import numpy as np
 import osmnx as ox
 import pandas as pd
 from haversine import haversine
-
+import networkx as nx
+from shapely.geometry import Point
+import os
 DISTANCE = 50
-
-
-class Point(Structure):
-    _fields_ = [('x', c_double), ('y', c_double)]
 
 
 def get_point(point):
@@ -27,40 +23,26 @@ def impact(point1, point2):
 
 
 def poi_impact(point):
-    tmp = (None, 0)
-    point = geo_to_point(point)
-    p_list = pois_from_point(point, distance=DISTANCE)
+    tmp = (None, 0, None)
+    point = Point(point)
+    poi_list = pois_from_point(point, distance=(DISTANCE+5))
     # get nearest POI and impact
-    for poi in p_list.geometry.centroid.tolist():
-        if DISTANCE >= m_haversine((point.x, point.y), (poi.x, poi.y)):
+    for index, poi in poi_list.geometry.centroid.items():
+        if DISTANCE >= haversine((point.x, point.y), (poi.x, poi.y)):
             imp = impact((point.x, point.y), (poi.x, poi.y))
             if tmp[1] < imp:
-                tmp = (poi, imp)
+                tmp = (poi, imp, index)
     return tmp
-
-
-def geo_to_point(geo_loc):
-    return Point(geo_loc[0], geo_loc[1])
-
 
 def m_haversine(point1, point2):
     return (haversine(point1, point2) * 1000)
 
-
-def hav_tweet(point1, point2):
-    if DISTANCE >= m_haversine(point1, point2):
-        print('entrou!')
-        return (point1, impact(point1, point2))
-
-
 def pois_from_point(point, distance):
-    p_list = all_pois.geometry.centroid
-    north, south, east, west = ox.bbox_from_point(
-        point=(point.y, point.x), distance=distance)
-    pois_retrieved = all_pois[(p_list.y <= north) & (
-        p_list.y >= south) & (p_list.x <= east) & (p_list.x >= west)]
-    return pois_retrieved
-
+    dist = p_list.apply(lambda place: place.distance(point)*100000)
+    return all_pois[dist <= distance]
+    # xmin, ymin, xmax, ymax= ox.bbox_from_point(point=(point.y, point.x), distance=distance)
+    # dist = p_list.cx[xmin:xmax, ymin:ymax].index
+    # return all_pois.loc[dist]
 
 def _apply_df(args):
     df, func, num, kwargs = args
@@ -76,16 +58,20 @@ def apply_by_multiprocessing(df, func, **kwargs):
     result = sorted(result, key=lambda x: x[0])
     return pd.concat([i[1] for i in result])
 
+def get_pois(place):
+    poi_file = "%s_pois.pkl" % place.replace(' ', '_')
+    if os.path.exists(poi_file):
+        return pd.read_pickle(poi_file)
+    else:
+        return ox.pois_from_place(place=place)
 
 if __name__ == "__main__":
-    cf = configparser.ConfigParser()
-    cf.read("file_path.properties")
-    path = dict(cf.items("file_path"))
-    dir_down = path['dir_down']
-
+    print('Load POIs')
     place = "San Francisco"
-    all_pois = ox.pois_from_place(place=place)
+    all_pois = get_pois(place)
+    p_list = all_pois.geometry.centroid
 
+    print('processing csv file!!')
     filedir = "/Users/lucasso 1/Downloads/view.json"
     tweets = list()
     with open(filedir) as data_file:
@@ -96,13 +82,19 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(tweets)
     df.rename(columns={0: 'timestamp', 1: 'user', 2: 'location'}, inplace=True)
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
     del tweets
 
     # add poi location and impact for each tweet
-    df['poi_loc'], df['impact'] = zip(
+    print('add poi location!')
+    #df['poi_loc'], df['impact'], df['poi_id'] = zip(*df.apply(lambda row: poi_impact(row['location']), axis=1))
+    df['poi_loc'], df['impact'], df['poi_id'] = zip(
         *apply_by_multiprocessing(df['location'], poi_impact))
 
-    df.to_pickle('poi_tw.pkl')
+    df = df.drop(df[pd.isna(df.poi_id)].index)
 
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.set_index(['timestamp'], inplace=True)
+    df['hour'] = df.index.hour
+
+    print('save file')
+    df.to_pickle('poi_tw.pkl')
