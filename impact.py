@@ -9,7 +9,7 @@ from haversine import haversine
 import networkx as nx
 from shapely.geometry import Point
 import os
-DISTANCE = 50
+DISTANCE = 10
 
 
 def get_point(point):
@@ -23,15 +23,16 @@ def impact(point1, point2):
 
 
 def poi_impact(point):
-    tmp = (None, 0, None)
+    tmp = (None, 0, None, None)
     point = Point(point)
     poi_list = pois_from_point(point, distance=(DISTANCE+5))
     # get nearest POI and impact
     for index, poi in poi_list.geometry.centroid.items():
-        if DISTANCE >= haversine((point.x, point.y), (poi.x, poi.y)):
+        if DISTANCE >= m_haversine((point.x, point.y), (poi.x, poi.y)):
             imp = impact((point.x, point.y), (poi.x, poi.y))
             if tmp[1] < imp:
-                tmp = (poi, imp, index)
+                amenity = poi_list.loc[index].amenity
+                tmp = (poi, imp, index, amenity)
     return tmp
 
 def m_haversine(point1, point2):
@@ -40,9 +41,6 @@ def m_haversine(point1, point2):
 def pois_from_point(point, distance):
     dist = p_list.apply(lambda place: place.distance(point)*100000)
     return all_pois[dist <= distance]
-    # xmin, ymin, xmax, ymax= ox.bbox_from_point(point=(point.y, point.x), distance=distance)
-    # dist = p_list.cx[xmin:xmax, ymin:ymax].index
-    # return all_pois.loc[dist]
 
 def _apply_df(args):
     df, func, num, kwargs = args
@@ -72,7 +70,7 @@ if __name__ == "__main__":
     p_list = all_pois.geometry.centroid
 
     print('processing csv file!!')
-    filedir = "/Users/lucasso 1/Downloads/view.json"
+    filedir = "/Users/lucasso 1/Downloads/sample_sf.json"
     tweets = list()
     with open(filedir) as data_file:
         for line in data_file:
@@ -88,7 +86,7 @@ if __name__ == "__main__":
     # add poi location and impact for each tweet
     print('add poi location!')
     #df['poi_loc'], df['impact'], df['poi_id'] = zip(*df.apply(lambda row: poi_impact(row['location']), axis=1))
-    df['poi_loc'], df['impact'], df['poi_id'] = zip(
+    df['poi_loc'], df['impact'], df['poi_id'], df['amenity'] = zip(
         *apply_by_multiprocessing(df['location'], poi_impact))
 
     df = df.drop(df[pd.isna(df.poi_id)].index)
