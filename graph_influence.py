@@ -28,7 +28,7 @@ def direct_influence(Graph):
 if __name__ == "__main__":
     doc_list = list()
     graphs = (["graphs/" + file for root, dirs, files in os.walk((os.getcwd() + "/graphs/"))
-               for file in files if file.endswith('.gml')])
+               for file in files if file.startswith('inf') and file.endswith('.gml')])
     for graph in graphs:
         H = nx.read_gml(graph)
         H = direct_influence(H)

@@ -9,7 +9,7 @@ from haversine import haversine
 import networkx as nx
 from shapely.geometry import Point
 import os
-DISTANCE = 10
+DISTANCE = 5
 
 
 def get_point(point):
@@ -35,12 +35,15 @@ def poi_impact(point):
                 tmp = (poi, imp, index, amenity)
     return tmp
 
+
 def m_haversine(point1, point2):
     return (haversine(point1, point2) * 1000)
+
 
 def pois_from_point(point, distance):
     dist = p_list.apply(lambda place: place.distance(point)*100000)
     return all_pois[dist <= distance]
+
 
 def _apply_df(args):
     df, func, num, kwargs = args
@@ -56,6 +59,7 @@ def apply_by_multiprocessing(df, func, **kwargs):
     result = sorted(result, key=lambda x: x[0])
     return pd.concat([i[1] for i in result])
 
+
 def get_pois(place):
     poi_file = "%s_pois.pkl" % place.replace(' ', '_')
     if os.path.exists(poi_file):
@@ -63,10 +67,15 @@ def get_pois(place):
     else:
         return ox.pois_from_place(place=place)
 
+
 if __name__ == "__main__":
     print('Load POIs')
     place = "San Francisco"
     all_pois = get_pois(place)
+    all_pois = all_pois.groupby('amenity').filter(lambda x: len(x) > 10)
+    remove = ['toilets', 'waste_basket', 'telephone','bench','fountain',
+              'vending_machine', 'recycling', 'table', 'drinking_water','atm']
+    all_pois = all_pois[~all_pois.amenity.isin(remove)]
     p_list = all_pois.geometry.centroid
 
     print('processing csv file!!')
