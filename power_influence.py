@@ -4,30 +4,29 @@ import numpy as np
 
 
 def power_influence(Graph):
-    out_degree = Graph.out_degree()
+    copy = Graph.copy()
+    copy.remove_edges_from(copy.selfloop_edges())
     M = nx.DiGraph()
     M.add_nodes_from(Graph.nodes(data=True))
     nx.set_node_attributes(M, 0, 'power')
     for node in Graph.nodes(data=True):
-        if(out_degree[node[0]] > 0):
-            out_dg = out_degree[node[0]]
-            sum_Wij = 0
-            for j in Graph.neighbors(node[0]):
-                Wij = Graph[node[0]][j]['weight']
-                Nik = Graph.in_degree(j, weight='weight')
-                sum_Wij += Wij / Nik
-                M.add_edge(node[0], j, weight=Wij)
-            power = np.log2(out_dg) + sum_Wij
-            M.node[node[0]]['power'] = power
+        sum_Wij = 0
+        for j in copy.neighbors(node[0]):
+            Wij = Graph[node[0]][j]['weight']
+            Nik = Graph.in_degree(j, weight='weight')
+            sum_Wij += Wij / Nik
+            M.add_edge(node[0], j, weight=(Wij / Nik))
+        M.node[node[0]]['power'] = sum_Wij
     return M
 
 def write_csv(Graph, file_name):
-    csv = "in,in_amenity,in_power,out,out_amenity,out_power\n"
-    for edge in Graph.edges():
+    csv = "in,in_amenity,in_power,influence,out,out_amenity,out_power\n"
+    for edge in Graph.edges(data=True):
         csv += str(edge[0]) + ','
         csv += str(Graph.node[edge[0]]['amenity']) + ','
         csv += str(Graph.node[edge[0]]['power']) + ','
-        csv +=str( edge[1]) + ','
+        csv += str(edge[2]['weight']) + ','
+        csv += str(edge[1]) + ','
         csv += str(Graph.node[edge[1]]['amenity']) + ','
         csv += str(Graph.node[edge[1]]['power']) + '\n'
     f = open(file_name,'w')

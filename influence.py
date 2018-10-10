@@ -107,9 +107,9 @@ def generate_graphs(t_slice, df, t_frame):
             M = nx.DiGraph()
             print('generating graph for %s at %iH' % (time, h))
             for name in sliced.user.unique():
-                # If user have at least 1 trajectory from i to j
-                if len(sliced.user == name) > 1:
-                    U = nx.DiGraph()
+                U = nx.DiGraph()
+                # If user have more than 1 place in its trajectory
+                if len(sliced[sliced.user == name].poi_id.unique()) > 1:
                     t_user = sliced[sliced.user == name]
                     # add transitions by user
                     path = list(t_user.poi_id)
@@ -122,7 +122,11 @@ def generate_graphs(t_slice, df, t_frame):
                         imp_f = t_user[t_user.poi_id == i].iloc[0].impact
                         imp_t = t_user[t_user.poi_id == j].iloc[0].impact
                         U[i][j]['weight'] += harmonic(imp_f, imp_t)
-                    M.add_edges_from(combined_graphs_edges(M, U))
+                else:
+                    #self loop
+                    user = sliced[sliced.user == name].iloc[0]
+                    U.add_edge(user.poi_id, user.poi_id, weight=user.impact)
+                M.add_edges_from(combined_graphs_edges(M, U))
             print('saving graph %iH' % h)
             M = set_amenities(M)
             nx.write_gml(M, "graphs/inf_for_%s_%iH.gml" % (time, h))
@@ -146,3 +150,6 @@ if __name__ == "__main__":
 
     # df_inf['d_inf'] = df_inf.apply(lambda row: (0.4 * row['imp_f'] + 0.6 * row['imp_t']), axis=1)
     # df_inf.apply(lambda row: (0.4 * row['imp_f'] + 0.6 * row['imp_t']), axis=1)
+
+# nx.bfs_tree(G, 1).edges()
+# list(nx.bfs_tree(G, 1).edges())
