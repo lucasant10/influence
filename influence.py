@@ -24,6 +24,25 @@ def combined_graphs_edges(G, H):
     return
 
 
+def combined_multi_digraphs_edges(G, H):
+    for u, v, key, hdata in H.edges(data=True, keys=True):
+        attr = dict((key, value) for key, value in hdata.items())
+        # get data from G or use empty dict if no edge in G
+        if G.has_edge(u, v, key):
+            gdata = G[u].get(v)[key]
+        else:
+            gdata = []
+        # add data from g
+        # sum shared items
+        shared = set(gdata) & set(hdata)
+        attr.update(dict((key, attr[key] + gdata[key]) for key in shared))
+        # non shared items
+        non_shared = set(gdata) - set(hdata)
+        attr.update(dict((key, gdata[key]) for key in non_shared))
+        yield u, v, key, attr
+    return
+
+
 def harmonic(value1, value2):
     return (2 * value1 * value2 / (value1 + value2))
 

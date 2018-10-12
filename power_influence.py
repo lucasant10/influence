@@ -1,6 +1,7 @@
 import networkx as nx
 import os
 import numpy as np
+from breadth_first_search import bfs_tree
 
 
 def power_influence(Graph):
@@ -19,6 +20,29 @@ def power_influence(Graph):
         M.node[node[0]]['power'] = sum_Wij
     return M
 
+
+def power_indirect_influence(Graph):
+    copy = Graph.copy()
+    copy.remove_edges_from(list(copy.selfloop_edges()))
+    M = nx.MultiDiGraph()
+    M.add_nodes_from(Graph.nodes(data=True))
+    nx.set_node_attributes(M, 0, 'power')
+    for node in Graph.nodes(data=True):
+        sum_Wij = 0
+        # perform depth first search in each node and compute Power
+        edge_tree = [x for x in list(
+            nx.edge_dfs(copy, node[0])) if x[2] == node[0]]
+        out_dg = list(copy.out_edges(node[0], keys=True))
+        node_tree = list(set(edge_tree + out_dg))
+        for ed in node_tree:
+            Wij = Graph[ed[0]][ed[1]][ed[2]]['weight']
+            Nik = Graph.in_degree(ed[1], weight='weight')
+            sum_Wij += Wij / Nik
+            M.add_edge(ed[0], ed[1], ed[2], weight=(Wij / Nik))
+        M.node[node[0]]['power'] = sum_Wij
+    return M
+
+
 def write_csv(Graph, file_name):
     csv = "in,in_amenity,in_power,influence,out,out_amenity,out_power\n"
     for edge in Graph.edges(data=True):
@@ -29,9 +53,10 @@ def write_csv(Graph, file_name):
         csv += str(edge[1]) + ','
         csv += str(Graph.node[edge[1]]['amenity']) + ','
         csv += str(Graph.node[edge[1]]['power']) + '\n'
-    f = open(file_name,'w')
-    f.writelines(csv) 
-    f.close()        
+    f = open(file_name, 'w')
+    f.writelines(csv)
+    f.close()
+
 
 if __name__ == "__main__":
     doc_list = list()
@@ -43,6 +68,6 @@ if __name__ == "__main__":
         file_name = graph.replace("inf", "power")
         print('saving graph %s' % file_name)
         nx.write_gml(H, file_name)
-        file_name = file_name.replace(".gml",".csv")
+        file_name = file_name.replace(".gml", ".csv")
         print('saving graph %s' % file_name)
         write_csv(H, file_name)
