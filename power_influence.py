@@ -1,8 +1,6 @@
 import networkx as nx
 import os
 import numpy as np
-from breadth_first_search import bfs_tree
-
 
 def power_influence(Graph):
     copy = Graph.copy()
@@ -31,16 +29,22 @@ def power_indirect_influence(Graph):
         sum_Wij = 0
         # perform depth first search in each node and compute Power
         edge_tree = [x for x in list(
-            nx.edge_dfs(copy, node[0])) if x[2] == node[0]]
+            nx.edge_dfs(copy, node[0])) if (x[2] == node[0]) and (x[1] == node[0])]
         out_dg = list(copy.out_edges(node[0], keys=True))
         node_tree = list(set(edge_tree + out_dg))
         for ed in node_tree:
             Wij = Graph[ed[0]][ed[1]][ed[2]]['weight']
-            Nik = Graph.in_degree(ed[1], weight='weight')
+            Nik = get_in_degree_weight(Graph, ed[1])
             sum_Wij += Wij / Nik
             M.add_edge(ed[0], ed[1], ed[2], weight=(Wij / Nik))
         M.node[node[0]]['power'] = sum_Wij
     return M
+
+
+def get_in_degree_weight(G, node):
+    #Avoid to compute weigth twice when a circuit exists
+    ed = G.in_edges(node, keys=True, data=True)
+    return sum([x[3]['weight'] for x in list(ed) if not((x[2] == node) and (x[0] != node))])
 
 
 def write_csv(Graph, file_name):
@@ -64,7 +68,7 @@ if __name__ == "__main__":
                for file in files if file.startswith('inf') and file.endswith('.gml')])
     for graph in graphs:
         H = nx.read_gml(graph)
-        H = power_influence(H)
+        H = power_indirect_influence(H)
         file_name = graph.replace("inf", "power")
         print('saving graph %s' % file_name)
         nx.write_gml(H, file_name)

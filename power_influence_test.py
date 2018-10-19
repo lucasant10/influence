@@ -1,5 +1,5 @@
 import unittest
-from power_influence import power_influence, power_indirect_influence
+from power_influence import power_influence, power_indirect_influence, get_in_degree_weight
 import networkx as nx
 
 class TestPowerInfluence(unittest.TestCase):
@@ -16,12 +16,13 @@ class TestPowerInfluence(unittest.TestCase):
     H.add_edge(1,1,1, weight=8)
     H.add_edge(1,2,1, weight=2)
     H.add_edge(2,3,1, weight=2)
+    H.add_edge(3,1,1, weight=2)
     H.add_edge(1,3,1, weight=4)
     H.add_edge(2,2,2, weight=6)
     H.add_edge(2,3,2, weight=2)
     H.add_edge(2,1,2, weight=2)
     H.add_edge(3,3,3, weight=2)
-    H.add_edge(3,1,3, weight=2)
+    
     
 
     def test_power(self):
@@ -35,14 +36,24 @@ class TestPowerInfluence(unittest.TestCase):
     
     def test_indirect_power(self):
         G_test = power_indirect_influence(self.H)
-        self.assertAlmostEqual(G_test.node[3]['power'], 0.16,1)
+        self.assertAlmostEqual(G_test.node[3]['power'], 0.20,2)
         self.assertAlmostEqual(G_test.node[1]['power'], 0.85,2)
-        self.assertAlmostEqual(G_test.node[2]['power'], 0.56,1)
+        self.assertAlmostEqual(G_test.node[2]['power'], 0.60,2)
         #test edge values
-        self.assertAlmostEqual(G_test[2][3][1]['weight'], 0.2,1)
-        self.assertAlmostEqual(G_test[2][3][2]['weight'], 0.2,1)
-        self.assertAlmostEqual(G_test[1][2][1]['weight'], 0.25,1)
-        self.assertAlmostEqual(G_test[1][3][1]['weight'], 0.4,1)
+        self.assertAlmostEqual(G_test[2][3][1]['weight'], 0.20,2)
+        self.assertAlmostEqual(G_test[2][3][2]['weight'], 0.20,2)
+        self.assertAlmostEqual(G_test[1][2][1]['weight'], 0.25,2)
+        self.assertAlmostEqual(G_test[1][3][1]['weight'], 0.40,2)
+        self.assertAlmostEqual(G_test[3][1][1]['weight'], 0.20,2)
+    
+    
+    def test_get_in_degree_weight(self):
+        self.assertEqual(get_in_degree_weight(self.H, 1), 10)
+        self.assertEqual(get_in_degree_weight(self.H, 2), 8)
+        self.assertEqual(get_in_degree_weight(self.H, 3), 10)
+
+        
+
 
 
 if __name__ == '__main__':
