@@ -3,6 +3,10 @@ import pandas as pd
 import math
 from collections import defaultdict
 import itertools
+import matplotlib.pyplot as plt
+import argparse
+import os
+
 
 def combined_multi_digraphs_edges(G, H):
     for u, v, key, hdata in H.edges(data=True, keys=True):
@@ -69,6 +73,8 @@ def generate_graphs(delta_t, df, t_frame):
         print('saving graph %s' % time)
         M = set_amenities(M,df)
         yield (M, time)
+    plt.hist(path_distribution, bins=100, log=True)
+    plt.savefig('dist_path.png')
 
 def create_edges(df):
     path = list(df.poi_id)
@@ -77,20 +83,32 @@ def create_edges(df):
     # add self loop for people that arrives in first POI
     edges.append((path[0],path[0],path[0]))
     #remove cycle in graph and keep self_loop for first POI only
-    edges = [x for x in list(edges) if not(((x[0] == x[1]) and (x[0] != path[0])) or (((x[1] == path[0]) and (x[0] != path[0]))))]
+    edges = [x for x in list(edges) if not(((x[0] == x[1]) or (x[1] == path[0])) and (x[0] != path[0]))]
     return edges
-
 
 
 if __name__ == "__main__":
 
-    df = pd.read_pickle('poi_tw.pkl')
+    parser = argparse.ArgumentParser(description='Creating Influence Network')
+    parser.add_argument('-p', '--place', required=True)
+    parser.add_argument('-f', '--file', required=True)
+    args = parser.parse_args()
+
+    file = args.file 
+    place = args.place
+
+    df = pd.read_pickle(file)
     df['amenity'] = df.amenity.fillna("")
+    group = df.groupby(['user']).count()
+    #df = df[df.user.isin(group[(group.poi_id>6)][3:].index)]
     inf_list = list()
     delta_t = 4
     t_frame = 'W-MON'
+    directory = 'graphs'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     for M, time in generate_graphs(delta_t, df, t_frame): 
-        nx.write_gml(M, "graphs/inf_for_%s.gml" % (time))
+        nx.write_gml(M, "graphs/inf_%s_%s.gml" % (place, time))
 
     # print('concatenating dataframes')
     # df_inf = pd.concat(inf_list)

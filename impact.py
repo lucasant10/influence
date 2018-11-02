@@ -1,7 +1,7 @@
 import json
 import math
 import multiprocessing as mp
-
+import argparse
 import numpy as np
 import osmnx as ox
 import pandas as pd
@@ -9,7 +9,9 @@ from haversine import haversine
 import networkx as nx
 from shapely.geometry import Point
 import os
-DISTANCE = 5
+DISTANCE = 30
+PLACE = ''
+FILE = ''
 
 
 def get_point(point):
@@ -69,19 +71,28 @@ def get_pois(place):
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Calculate Impact of POI')
+    parser.add_argument('-p', '--place', required=True)
+    parser.add_argument('-d', '--distance', default=DISTANCE, required=True)
+    parser.add_argument('-f', '--file', required=True)
+    args = parser.parse_args()
+    
+    PLACE = args.place
+    DISTANCE = int(args.distance)
+    FILE = args.file 
+
     print('Load POIs')
-    place = "San Francisco"
-    all_pois = get_pois(place)
-    all_pois = all_pois.groupby('amenity').filter(lambda x: len(x) > 10)
+    all_pois = get_pois(PLACE)
+    all_pois = all_pois.groupby('amenity').filter(lambda x: len(x) > 5)
     remove = ['toilets', 'waste_basket', 'telephone','bench','fountain',
               'vending_machine', 'recycling', 'table', 'drinking_water','atm']
     all_pois = all_pois[~all_pois.amenity.isin(remove)]
     p_list = all_pois.geometry.centroid
 
     print('processing csv file!!')
-    filedir = "/Users/lucasso 1/Downloads/sample_sf.json"
     tweets = list()
-    with open(filedir) as data_file:
+    with open(FILE) as data_file:
         for line in data_file:
             tweet = json.loads(line)
             tweets.append([tweet['created_at'], tweet['user_screen_name'],
@@ -104,4 +115,4 @@ if __name__ == "__main__":
     df['hour'] = df.index.hour
 
     print('save file')
-    df.to_pickle('poi_tw.pkl')
+    df.to_pickle('poi_tw_%s.pkl' % PLACE.replace(' ', '_'))
