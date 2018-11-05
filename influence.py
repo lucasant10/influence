@@ -1,4 +1,5 @@
-import matplotlib matplotlib.use('agg')
+import matplotlib 
+matplotlib.use('agg')
 import networkx as nx
 import pandas as pd
 import math
