@@ -1,5 +1,5 @@
 import unittest
-from influence import generate_graphs
+from influence import generate_graphs, create_edges
 import networkx as nx
 import pandas as pd
 import numpy as np
@@ -26,21 +26,36 @@ class TestInfluence(unittest.TestCase):
         delta_t = 4    
         t_frame = 'W'
         for U, _ in generate_graphs(delta_t, self.dataDf, t_frame):
-            self.assertTrue(U.has_edge(1,1,1))
+            self.assertTrue(U.has_edge('H',1,1))
+            self.assertTrue(U.has_edge(1,'H',1))
             self.assertFalse(U.has_edge(1,2,1))
-            self.assertTrue(U.has_edge(2,2,2))
+            self.assertFalse(U.has_edge(2,2,2))
+            self.assertTrue(U.has_edge('H',2,2))
+            self.assertTrue(U.has_edge(2,'H',2))
             self.assertTrue(U.has_edge(2,3,2))
             self.assertTrue(U.has_edge(3,1,2))
-            self.assertTrue(U.has_edge(3,3,3))
-            self.assertFalse(U.has_edge(3,2,3))
+            self.assertTrue(U.has_edge(1,'H',2))
             self.assertTrue(U.has_edge(2,1,2))
-            self.assertAlmostEqual(U[1][1][1]['weight'], 1.5,1)
-            self.assertAlmostEqual(U[2][2][2]['weight'], 1.3,1)
+            self.assertFalse(U.has_edge(3,3,3))
+            self.assertTrue(U.has_edge('H',3,3))
+            self.assertTrue(U.has_edge(3,'H',3))
+            self.assertFalse(U.has_edge(3,2,3))
+            self.assertAlmostEqual(U[1]['H'][1]['weight'], 1.5,1)
+            self.assertAlmostEqual(U['H'][1][1]['weight'], 1.5,1)
+            self.assertAlmostEqual(U[1]['H'][2]['weight'], 1.1,1)
+            self.assertAlmostEqual(U[2]['H'][2]['weight'], 0.2,1)
+            self.assertAlmostEqual(U['H'][2][2]['weight'], 1.3,1)
+            self.assertAlmostEqual(U[3]['H'][3]['weight'], 0.1,1)
+            self.assertAlmostEqual(U['H'][3][3]['weight'], 0.1,1)
             self.assertAlmostEqual(U[2][3][2]['weight'], 0.2,1)
             self.assertAlmostEqual(U[2][3][2]['weight'], 0.2,1)
             self.assertAlmostEqual(U[3][1][2]['weight'], 0.2,1)
-            self.assertAlmostEqual(U[3][3][3]['weight'], 0.1,1)
             self.assertAlmostEqual(U[2][1][2]['weight'], 0.9,1)
+    
+    def test_create_edges(self):
+        edges = create_edges(self.dataDf)
+        t_edges = [(1, 2, 1), (2, 3, 1), (1, 3, 1), (3, 2, 1), ('H', 1, 1), (1, 'H', 1)]
+        self.assertEqual(edges,t_edges)
 
 
 

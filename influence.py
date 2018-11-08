@@ -35,7 +35,8 @@ def harmonic(value1, value2):
 def set_amenities(G, df):
     attr = dict()
     for node in G.nodes():
-        attr[node] = df[df['poi_id'] == node].iloc[0].amenity
+        if node != 'H':
+            attr[node] = df[df['poi_id'] == node].iloc[0].amenity
     nx.set_node_attributes(G, attr, 'amenity')
     return G
 
@@ -67,9 +68,20 @@ def generate_graphs(delta_t, df, t_frame):
                 U.add_edges_from(edges, weight=0)
                 # sum egde weight
                 for i, j, key in U.edges(keys=True):
+                    #if node i is the 'Home' POI 
+                    if (i == 'H'):
                     # get impact
-                    imp_f = path_df[path_df.poi_id == i].impact.max()
-                    imp_t = path_df[path_df.poi_id == j].impact.max()
+                        imp_f = path_df[path_df.poi_id == j].impact.max()
+                        imp_t = path_df[path_df.poi_id == j].impact.max()
+                    #if node i is the 'Home' POI 
+                    elif (j == 'H'):
+                        imp_f = path_df[path_df.poi_id == i].impact.max()
+                        imp_t = path_df[path_df.poi_id == i].impact.max()
+                    #otherwise is a edge between POI
+                    else:
+                        imp_f = path_df[path_df.poi_id == i].impact.max()
+                        imp_t = path_df[path_df.poi_id == j].impact.max()
+                    # Calculate the uncertainty mean for edge
                     U[i][j][key]['weight'] += harmonic(imp_f, imp_t)
                 M.add_edges_from(combined_multi_digraphs_edges(M, U))
         print('saving graph %s' % time)
@@ -82,10 +94,11 @@ def create_edges(df):
     path = list(df.poi_id)
     #generate edges from path
     edges = list(zip(path[0::1], path[1::1], itertools.repeat(path[0])))
-    # add self loop for people that arrives in first POI
-    edges.append((path[0],path[0],path[0]))
-    #remove cycle in graph and keep self_loop for first POI only
-    edges = [x for x in list(edges) if not(((x[0] == x[1]) or (x[1] == path[0])) and (x[0] != path[0]))]
+    #remove cycle in graph and self_loop
+    edges = [x for x in list(edges) if (x[0] != x[1]) and (x[1] != path[0])]
+    # add 'Home' POI to mean that this person arrives or departs from it.
+    edges.append(('H',path[0],path[0]))
+    edges.append((path[-1],'H',path[0]))
     return edges
 
 
