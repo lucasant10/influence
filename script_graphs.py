@@ -49,6 +49,6 @@ if __name__ == "__main__":
             'python',
             'metrics_power.py',
             '-p', city,
-            '-i', 5
+            '-i', '5'
         ])
 
