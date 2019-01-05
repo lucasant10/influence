@@ -118,7 +118,8 @@ if __name__ == "__main__":
     #df = df[df.user.isin(group[(group.poi_id>6)][3:].index)]
     inf_list = list()
     delta_t = 4
-    t_frame = 'W-MON'
+    #t_frame = 'W-MON'
+    t_frame = '2QS'
     directory = 'graphs'
     if not os.path.exists(directory):
         os.makedirs(directory)

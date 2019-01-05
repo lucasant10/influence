@@ -1,6 +1,7 @@
 import networkx as nx
 import os
 import numpy as np
+import argparse
 
 def power_support_influence(Graph):
     copy = Graph.copy()
@@ -75,19 +76,26 @@ def write_csv(In_G, Out_G, file_name):
 
 if __name__ == "__main__":
     doc_list = list()
-    graphs = (["graphs/" + file for root, dirs, files in os.walk((os.getcwd() + "/graphs/"))
-               for file in files if file.startswith('inf') and file.endswith('.gml')])
-    for graph in graphs:
-        H = nx.read_gml(graph)
-        In_G = power_indegree_influence(H)
-        Out_G = power_outdegree_influence(H)
-        file_name = graph.replace("inf", "support")
-        print('saving graph %s' % file_name)
-        nx.write_gml(In_G, file_name)
-        file_name = graph.replace("inf", "attract")
-        print('saving graph %s' % file_name)
-        nx.write_gml(Out_G, file_name)
-        file_name = graph.replace(".gml", ".csv")
-        file_name = file_name.replace("inf", "power")
-        print('saving CSV %s' % file_name)
-        write_csv(In_G, Out_G, file_name)
+    #graphs = (["graphs/" + file for root, dirs, files in os.walk((os.getcwd() + "/graphs/"))
+    #           for file in files if file.startswith('inf') and file.endswith('.gml')])
+    
+    parser = argparse.ArgumentParser(description='Compute Influence')
+    parser.add_argument('-f', '--file', required=True)
+    args = parser.parse_args()
+
+    graph = args.file 
+
+    #for graph in graphs:
+    H = nx.read_gml(graph)
+    In_G = power_support_influence(H)
+    Out_G = power_attract_influence(H)
+    file_name = graph.replace("inf", "support")
+    print('saving graph %s' % file_name)
+    nx.write_gml(In_G, file_name)
+    file_name = graph.replace("inf", "attract")
+    print('saving graph %s' % file_name)
+    nx.write_gml(Out_G, file_name)
+    file_name = graph.replace(".gml", ".csv")
+    file_name = file_name.replace("inf", "power")
+    print('saving CSV %s' % file_name)
+    write_csv(In_G, Out_G, file_name)
