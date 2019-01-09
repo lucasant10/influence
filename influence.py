@@ -47,7 +47,7 @@ def split(df, splitters):
         start = index
     yield df[start:]
 
-def generate_graphs(delta_t, df, t_frame):
+def generate_graphs(delta_t, df, t_frame, place):
     path_distribution = list()
     for group in df.groupby(pd.Grouper(freq=t_frame)):
         # for each time frame
@@ -123,8 +123,10 @@ if __name__ == "__main__":
     directory = 'graphs'
     if not os.path.exists(directory):
         os.makedirs(directory)
-    for M, time in generate_graphs(delta_t, df, t_frame): 
-        nx.write_gml(M, "graphs/inf_%s_%s.gml" % (place, time))
+    has_files = ([file for file in os.listdir(directory) if file.startswith('inf_%s' % place) and file.endswith('.gml')])
+    if not has_files:
+        for M, time in generate_graphs(delta_t, df, t_frame, place): 
+            nx.write_gml(M, "graphs/inf_%s_%s.gml" % (place, time))
 
     # print('concatenating dataframes')
     # df_inf = pd.concat(inf_list)
