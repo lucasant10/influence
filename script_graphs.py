@@ -25,7 +25,7 @@ def call_functions(file):
         '-p', city,
         '-f', file
     ])
-
+    logger.info(">>>>>> Finished for %s"  % city)
     # logger.info(">>>>>> Creating Metrics for %s" % city)
     # call([
     #     'python',
