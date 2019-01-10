@@ -61,7 +61,7 @@ def create_row(df, Graph, iteration):
     tmp.append(np.mean(list(dict(Graph.out_degree()).values())))
     tmp.append(np.mean(list(dict(Graph.in_degree()).values())))
     tmp.append(nx.average_shortest_path_length(Graph))
-    tmp.append(nx.diamenter(Graph.to_undirected()))
+    tmp.append(nx.diameter(Graph.to_undirected()))
     return tmp
 
 
