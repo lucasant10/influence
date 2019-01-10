@@ -5,7 +5,8 @@ import argparse
 
 def power_support_influence(Graph):
     copy = Graph.copy()
-    copy.remove_node('H')
+    if copy.has_node('H'):
+        copy.remove_node('H')
     M = nx.MultiDiGraph()
     M.add_nodes_from(copy.nodes(data=True))
     nx.set_node_attributes(M, 0, 'support')
@@ -25,7 +26,8 @@ def power_support_influence(Graph):
 
 def power_attract_influence(Graph):
     copy = Graph.copy()
-    copy.remove_node('H')
+    if copy.has_node('H'):
+        copy.remove_node('H')
     #This procedure makes easy to compute out_power
     copy = copy.reverse()
     M = nx.MultiDiGraph()

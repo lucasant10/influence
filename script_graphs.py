@@ -10,29 +10,29 @@ import multiprocessing as mp
 def call_functions(file):
     logger.info(">>>>>> Processing file %s" % file)
     city = file.replace('.pkl', '').replace('poi_tw_', '')
-    logger.info(">>>>>> Creating networks for %s" % city)    
-    call([
-            'python',
-            'influence.py',
-            '-p', city,
-            '-f', file
-        ])
+    # logger.info(">>>>>> Creating networks for %s" % city)    
+    # call([
+    #         'python',
+    #         'influence.py',
+    #         '-p', city,
+    #         '-f', file
+    #     ])
 
-    logger.info(">>>>>> Creating Plots for %s" % city)
-    call([
-        'python',
-        'characterization_plot.py',
-        '-p', city,
-        '-f', file
-    ])
-    logger.info(">>>>>> Finished for %s"  % city)
-    # logger.info(">>>>>> Creating Metrics for %s" % city)
+    # logger.info(">>>>>> Creating Plots for %s" % city)
     # call([
     #     'python',
-    #     'metrics_power.py',
+    #     'characterization_plot.py',
     #     '-p', city,
-    #     '-i', '5'
+    #     '-f', file
     # ])
+    # logger.info(">>>>>> Finished for %s"  % city)
+    logger.info(">>>>>> Creating Metrics for %s" % city)
+    call([
+        'python',
+        'metrics_power.py',
+        '-p', city,
+        '-i', '5'
+    ])
 
 
 if __name__ == "__main__":
