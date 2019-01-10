@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 from power_influence import power_support_influence,power_attract_influence
 import logging
+import multiprocessing as mp
 
 
 def create_df_sp(In_G, Out_G):
@@ -58,6 +59,8 @@ def create_row(df, Graph, iteration):
     tmp.append(nx.number_of_edges(Graph))
     tmp.append(np.mean(list(dict(Graph.out_degree()).values())))
     tmp.append(np.mean(list(dict(Graph.in_degree()).values())))
+    tmp.append(nx.average_shortest_path_length(Graph))
+    tmp.append(nx.diamenter(Graph.to_undirected()))
     return tmp
 
 
@@ -99,9 +102,38 @@ def attract(ap_G, n, file_name):
         ap_G = remove_edges(ap_G, node)
     return rows
 
+def create_graphs(graph):
+    logger.info(">>>>>> Processing graph %s" % graph)
+    H = nx.read_gml(directory + graph)
+    sp_G = H.copy()
+    ap_G = H.copy()
+    file_name = directory + graph.split('.')[0].replace('inf_', '')
+    row_lines = list()
+    columns = ['iter','power','support', 'sp_amenity', 'attract', 'ap_amenity', 'density',
+            'strong_cc', 'weak_cc', 'num_nodes', 'num_edges', 'avg_in_dg', 'avg_out_dg','avg_short_path','diamenter']
+    logger.info(">>>>>> Processing Support for %s" % graph)
+    row_lines += support(H.copy(), iter_param, file_name)
+    logger.info(">>>>>> Processing Attract for %s" % graph)
+    row_lines += attract(H.copy(), iter_param, file_name)
+    df = pd.DataFrame(row_lines, columns=columns)
+    logger.info(">>>>>> Saving dataFrame for %s" % file_name)
+    df.to_pickle('%s_metrics.pkl' % (file_name))
+    logger.info(">>>>>> Finished for %s"  % graph)
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler('metrics_power_%s.log' %(datetime.datetime.now().strftime('%d_%m_%y')))
+    handler.setLevel(logging.INFO)
+    consoleHandler = logging.StreamHandler()
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    consoleHandler.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(handler)
+    logger.addHandler(consoleHandler)
+
     parser = argparse.ArgumentParser(description='Metrics of Power')
     parser.add_argument('-p', '--place', required=True)
     parser.add_argument('-i', '--iterations', required=True)
@@ -115,17 +147,11 @@ if __name__ == "__main__":
         os.makedirs(directory)
 
     files = ([file for file in os.listdir('graphs') if file.startswith('inf_%s' % place) and file.endswith('.gml')])
-    for graph in files:
-        logger.info(">>>>>> Processing graph %s" % graph)
-        H = nx.read_gml(directory + graph)
-        sp_G = H.copy()
-        ap_G = H.copy()
-        file_name = directory + graph.split('.')[0].replace('inf_', '')
-        row_lines = list()
-        columns = ['iter','power','support', 'sp_amenity', 'attract', 'ap_amenity', 'density',
-                'strong_cc', 'weak_cc', 'num_nodes', 'num_edges', 'avg_in_dg', 'avg_out_dg']
-        row_lines += support(H.copy(), iter_param, file_name)
-        row_lines += attract(H.copy(), iter_param, file_name)
-        df = pd.DataFrame(row_lines, columns=columns)
-        logger.info(">>>>>> Saving dataFrame for %s" % file_name)
-        df.to_pickle('%s_metrics.pkl' % (file_name))
+
+    workers = (mp.cpu_count()-1)
+    logger.info(">>>>>> number of workes: %i" % workers)
+    pool = mp.Pool(processes=(workers))
+    logger.info(">>>>>> Call functions with multiprocessing")
+    _ = pool.map(create_graphs, files)
+    
+        
