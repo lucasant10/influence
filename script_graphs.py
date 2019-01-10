@@ -31,7 +31,7 @@ def call_functions(file):
         'python',
         'metrics_power.py',
         '-p', city,
-        '-i', '5'
+        '-i', '3'
     ])
 
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     path = dict(cf.items("file_path"))
     files = ([file for file in os.listdir() if file.endswith('.pkl')])
     logger.info(">>>>>> start processing")
-    workers = (mp.cpu_count()-1)
+    workers = (1)
     logger.info(">>>>>> number of workes: %i" % workers)
     pool = mp.Pool(processes=(workers))
     logger.info(">>>>>> Call functions with multiprocessing")
