@@ -2,6 +2,7 @@ import networkx as nx
 import os
 import numpy as np
 import argparse
+import pandas as pd
 
 def power_support_influence(Graph):
     copy = Graph.copy()
@@ -46,6 +47,24 @@ def power_attract_influence(Graph):
             M.add_edge(ed[1], ed[0], ed[2], weight=(Wij / Nik))
         M.node[node[0]]['attract'] = sum_Wij
     return M
+
+def attract_independece(Graph):
+    node_indepence = dict()
+    for node in Graph.nodes(data=True):
+        total = Graph.in_degree(node[0], 'weight')
+        #get the sum of H weight for each edge in node
+        h_weight = sum([x[2] for x in  H.in_edges(node[0],'weight') if x[1]=='H'])
+        node_indepence[node[0]] = (0 if total == 0 else h_weight / total)
+    return node_indepence
+
+def support_independece(Graph):
+    node_indepence = dict()
+    for node in Graph.nodes(data=True):
+        total = Graph.out_degree(node[0], 'weight')
+        #get the sum of H weight for each edge in node
+        h_weight = sum([x[2] for x in  H.out_edges(node[0],'weight') if x[1]=='H'])
+        node_indepence[node[0]] = (0 if total == 0 else h_weight / total)
+    return node_indepence
 
 
 def get_out_degree_edges(G, node):

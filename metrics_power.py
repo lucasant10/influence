@@ -51,133 +51,161 @@ def create_df_ap(In_G, Out_G):
 
 def create_row(node_tuple, Graph, iteration):
     tmp = list()
-    tmp.append(iteration)
-    tmp.append(node_tuple[0])
-    tmp.append(node_tuple[1])
-    tmp.append(node_tuple[2])
-    tmp.append(nx.density(Graph))
-    tmp.append(nx.number_strongly_connected_components(Graph))
-    tmp.append(nx.number_weakly_connected_components(Graph))
-    tmp.append(nx.number_of_nodes(Graph))
-    tmp.append(nx.number_of_edges(Graph))
-    tmp.append(np.mean(list(dict(Graph.out_degree()).values())))
-    tmp.append(np.mean(list(dict(Graph.in_degree()).values())))
-    tmp.append(nx.average_shortest_path_length(Graph))
-    tmp.append(nx.diameter(Graph.to_undirected()))
+    try:
+        tmp.append(iteration)
+        tmp.append(node_tuple[0])
+        tmp.append(node_tuple[1])
+        tmp.append(node_tuple[2])
+        tmp.append(nx.density(Graph))
+        tmp.append(nx.number_strongly_connected_components(Graph))
+        if nx.is_weakly_connected(Graph):
+            tmp.append(nx.number_weakly_connected_components(Graph))
+        else:
+            tmp.append(0)
+        tmp.append(nx.number_of_nodes(Graph))
+        tmp.append(nx.number_of_edges(Graph))
+        tmp.append(np.mean(list(dict(Graph.out_degree()).values())))
+        tmp.append(np.mean(list(dict(Graph.in_degree()).values())))
+        tmp.append(nx.average_shortest_path_length(Graph))
+        tmp.append(nx.diameter(Graph.to_undirected()))
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+    
     return tmp
 
 
 def remove_edges(Graph, node):
     G = Graph.copy()
-    for e_in, e_out, k in list(G.edges(keys=True)):
-        if node == str(k):
-            G.remove_edge(e_in, e_out, key=k)
-        elif node == e_out:
-            G.remove_edge(e_in, e_out)
+    try:
+        for e_in, e_out, k in list(G.edges(keys=True)):
+            if node == str(k):
+                G.remove_edge(e_in, e_out, key=k)
+            elif node == e_out:
+                G.remove_edge(e_in, e_out)
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
     return G
 
 
 def support(sp_G, n, file_name):
     rows = list()
     for i in range(n):
-        sp = power_support_influence(sp_G)
-        ap = power_attract_influence(sp_G)
-        df = create_df_sp(sp, ap)
-        df['power'] = 'support'
-        df.to_pickle('%s_sp_%i.pkl' % (file_name, (i + 1)))
-        node = df.sort_values(['in_support'], ascending=False).iloc[0][[
-            'in', 'in_amenity']]
-        node_tuple = ('support', node['in'], node['in_amenity'])
-        rows.append(create_row(node_tuple, sp_G, i))
-        sp_G = remove_edges(sp_G, node['in'])
+        try:
+            sp = power_support_influence(sp_G)
+            ap = power_attract_influence(sp_G)
+            df = create_df_sp(sp, ap)
+            df['power'] = 'support'
+            df.to_pickle('%s_sp_%i.pkl' % (file_name, (i + 1)))
+            node = df.sort_values(['in_support'], ascending=False).iloc[0][[
+                'in', 'in_amenity']]
+            node_tuple = ('support', node['in'], node['in_amenity'])
+            rows.append(create_row(node_tuple, sp_G, i))
+            sp_G = remove_edges(sp_G, node['in'])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
     return rows
 
 
 def attract(ap_G, n, file_name):
     rows = list()
     for i in range(n):
-        sp = power_support_influence(ap_G)
-        ap = power_attract_influence(ap_G)
-        df = create_df_ap(ap, sp)
-        df['power'] = 'attract'
-        df.to_pickle('%s_ap_%i.pkl' % (file_name, (i + 1)))
-        node = df.sort_values(['out_attract'], ascending=False).iloc[0][[
-            'out', 'out_amenity']]
-        node_tuple = ('attract', node['out'], node['out_amenity'])
-        rows.append(create_row(df, ap_G, i))
-        ap_G = remove_edges(ap_G, node['out'])
+        try:
+            sp = power_support_influence(ap_G)
+            ap = power_attract_influence(ap_G)
+            df = create_df_ap(ap, sp)
+            df['power'] = 'attract'
+            df.to_pickle('%s_ap_%i.pkl' % (file_name, (i + 1)))
+            node = df.sort_values(['out_attract'], ascending=False).iloc[0][[
+                'out', 'out_amenity']]
+            node_tuple = ('attract', node['out'], node['out_amenity'])
+            rows.append(create_row(df, ap_G, i))
+            ap_G = remove_edges(ap_G, node['out'])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
     return rows
 
 
 def eigenvector_centrality_in(Graph, n, file_name):
     rows = list()
     for i in range(n):
-        if Graph.has_node('H'):
-            Graph.remove_node('H')
-        ec = nx.eigenvector_centrality_numpy(Graph)
-        columns = ['poi_id', 'eigcen_in']
-        df = pd.DataFrame(
-            [list(ec.keys()), list(ec.values())], columns=columns)
-        df.to_pickle('%s_eigcen_in_%i.pkl' % (file_name, (i + 1)))
-        node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
-        amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
-        node_tuple = ('eigcen_in', node[0], amenity)
-        rows.append(create_row(node_tuple, Graph, i))
-        Graph = remove_edges(Graph, node[0])
+        try:
+            if Graph.has_node('H'):
+                Graph.remove_node('H')
+            ec = nx.eigenvector_centrality_numpy(Graph)
+            columns = ['poi_id', 'eigcen_in']
+            df = pd.DataFrame(
+                [list(ec.keys()), list(ec.values())], columns=columns)
+            df.to_pickle('%s_eigcen_in_%i.pkl' % (file_name, (i + 1)))
+            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
+            node_tuple = ('eigcen_in', node[0], amenity)
+            rows.append(create_row(node_tuple, Graph, i))
+            Graph = remove_edges(Graph, node[0])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
     return rows
 
 
 def eigenvector_centrality_out(Graph, n, file_name):
     rows = list()
     for i in range(n):
-        if Graph.has_node('H'):
-            Graph.remove_node('H')
-        ec = nx.eigenvector_centrality_numpy(Graph.reverse())
-        columns = ['poi_id', 'eigcen_out']
-        df = pd.DataFrame(
-            [list(ec.keys()), list(ec.values())], columns=columns)
-        df.to_pickle('%s_eigcen_out_%i.pkl' % (file_name, (i + 1)))
-        node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
-        amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
-        node_tuple = ('eigcen_out', node[0], amenity)
-        rows.append(create_row(node_tuple, Graph, i))
-        Graph = remove_edges(Graph, node[0])
+        try:
+            if Graph.has_node('H'):
+                Graph.remove_node('H')
+            ec = nx.eigenvector_centrality_numpy(Graph.reverse())
+            columns = ['poi_id', 'eigcen_out']
+            df = pd.DataFrame(
+                [list(ec.keys()), list(ec.values())], columns=columns)
+            df.to_pickle('%s_eigcen_out_%i.pkl' % (file_name, (i + 1)))
+            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
+            node_tuple = ('eigcen_out', node[0], amenity)
+            rows.append(create_row(node_tuple, Graph, i))
+            Graph = remove_edges(Graph, node[0])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
     return rows
 
 
 def in_degree_centrality(G, n, file_name):
     rows = list()
     for i in range(n):
-        if Graph.has_node('H'):
-            Graph.remove_node('H')
-        dc = nx.in_degree_centrality(Graph)
-        columns = ['poi_id', 'in_dg_cen']
-        df = pd.DataFrame(
-            [list(dc.keys()), list(dc.values())], columns=columns)
-        df.to_pickle('%s_in_dg_cen_%i.pkl' % (file_name, (i + 1)))
-        node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
-        amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
-        node_tuple = ('in_dg_cen', node[0], amenity)
-        rows.append(create_row(node_tuple, Graph, i))
-        Graph = remove_edges(Graph, node[0])
+        try:
+            if Graph.has_node('H'):
+                Graph.remove_node('H')
+            dc = nx.in_degree_centrality(Graph)
+            columns = ['poi_id', 'in_dg_cen']
+            df = pd.DataFrame(
+                [list(dc.keys()), list(dc.values())], columns=columns)
+            df.to_pickle('%s_in_dg_cen_%i.pkl' % (file_name, (i + 1)))
+            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
+            node_tuple = ('in_dg_cen', node[0], amenity)
+            rows.append(create_row(node_tuple, Graph, i))
+            Graph = remove_edges(Graph, node[0])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
     return rows
 
 
 def out_degree_centrality(Graph, n, file_name):
     rows = list()
     for i in range(n):
-        if Graph.has_node('H'):
-            Graph.remove_node('H')
-        dc = nx.out_degree_centrality(Graph)
-        columns = ['poi_id', 'out_dg_cen']
-        df = pd.DataFrame(
-            [list(dc.keys()), list(dc.values())], columns=columns)
-        df.to_pickle('%s_out_dg_cen_%i.pkl' % (file_name, (i + 1)))
-        node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
-        amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
-        node_tuple = ('out_dg_cen', node[0], amenity)
-        rows.append(create_row(node_tuple, Graph, i))
-        Graph = remove_edges(Graph, node[0])
+        try:
+            if Graph.has_node('H'):
+                Graph.remove_node('H')
+            dc = nx.out_degree_centrality(Graph)
+            columns = ['poi_id', 'out_dg_cen']
+            df = pd.DataFrame(
+                [list(dc.keys()), list(dc.values())], columns=columns)
+            df.to_pickle('%s_out_dg_cen_%i.pkl' % (file_name, (i + 1)))
+            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
+            node_tuple = ('out_dg_cen', node[0], amenity)
+            rows.append(create_row(node_tuple, Graph, i))
+            Graph = remove_edges(Graph, node[0])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
     return rows
 
 
