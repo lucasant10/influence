@@ -70,7 +70,11 @@ def create_row(node_tuple, Graph, iteration):
             tmp.append(nx.average_shortest_path_length(Graph))
         else:
             tmp.append(0)
-        tmp.append(nx.diameter(Graph.to_undirected()))
+        und_G = Graph.to_undirected()
+        if nx.is_connected(und_G):
+            tmp.append(nx.diameter())
+        else:
+            tmp.append(0)
     except Exception as e:
         print("Unexpected error: {}".format(e))
         logger.exception(e)
