@@ -66,7 +66,10 @@ def create_row(node_tuple, Graph, iteration):
         tmp.append(nx.number_of_edges(Graph))
         tmp.append(np.mean(list(dict(Graph.out_degree()).values())))
         tmp.append(np.mean(list(dict(Graph.in_degree()).values())))
-        tmp.append(nx.average_shortest_path_length(Graph))
+        if nx.is_weakly_connected(Graph):
+            tmp.append(nx.average_shortest_path_length(Graph))
+        else:
+            tmp.append(0)
         tmp.append(nx.diameter(Graph.to_undirected()))
     except Exception as e:
         print("Unexpected error: {}".format(e))
@@ -172,7 +175,7 @@ def eigenvector_centrality_out(Graph, n, file_name):
     return rows
 
 
-def in_degree_centrality(G, n, file_name):
+def in_degree_centrality(Graph, n, file_name):
     rows = list()
     for i in range(n):
         try:
