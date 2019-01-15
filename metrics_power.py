@@ -70,7 +70,7 @@ def create_row(node_tuple, Graph, iteration):
         tmp.append(nx.diameter(Graph.to_undirected()))
     except Exception as e:
         print("Unexpected error: {}".format(e))
-    
+        logger.exception(e)
     return tmp
 
 
@@ -84,6 +84,7 @@ def remove_edges(Graph, node):
                 G.remove_edge(e_in, e_out)
     except Exception as e:
         print("Unexpected error: {}".format(e))
+        logger.exception(e)
     return G
 
 
@@ -103,6 +104,7 @@ def support(sp_G, n, file_name):
             sp_G = remove_edges(sp_G, node['in'])
         except Exception as e:
             print("Unexpected error: {}".format(e))
+            logger.exception(e)
     return rows
 
 
@@ -122,6 +124,7 @@ def attract(ap_G, n, file_name):
             ap_G = remove_edges(ap_G, node['out'])
         except Exception as e:
             print("Unexpected error: {}".format(e))
+            logger.exception(e)
     return rows
 
 
@@ -143,6 +146,7 @@ def eigenvector_centrality_in(Graph, n, file_name):
             Graph = remove_edges(Graph, node[0])
         except Exception as e:
             print("Unexpected error: {}".format(e))
+            logger.exception(e)
     return rows
 
 
@@ -164,6 +168,7 @@ def eigenvector_centrality_out(Graph, n, file_name):
             Graph = remove_edges(Graph, node[0])
         except Exception as e:
             print("Unexpected error: {}".format(e))
+            logger.exception(e)
     return rows
 
 
@@ -185,6 +190,7 @@ def in_degree_centrality(G, n, file_name):
             Graph = remove_edges(Graph, node[0])
         except Exception as e:
             print("Unexpected error: {}".format(e))
+            logger.exception(e)
     return rows
 
 
@@ -206,6 +212,7 @@ def out_degree_centrality(Graph, n, file_name):
             Graph = remove_edges(Graph, node[0])
         except Exception as e:
             print("Unexpected error: {}".format(e))
+            logger.exception(e)
     return rows
 
 
@@ -223,7 +230,7 @@ def create_graphs(graph):
     logger.info(">>>>>> Processing Eig Cen In for %s" % graph)
     row_lines += eigenvector_centrality_in(H.copy(), iter_param, file_name)
     logger.info(">>>>>> Processing Eig Cen Out for %s" % graph)
-    row_lines += eigenvector_centrality_in(H.copy(), iter_param, file_name)
+    row_lines += eigenvector_centrality_out(H.copy(), iter_param, file_name)
     df = pd.DataFrame(row_lines, columns=columns)
     logger.info(">>>>>> Processing In Dgr Cen for %s" % graph)
     row_lines += in_degree_centrality(H.copy(), iter_param, file_name)
