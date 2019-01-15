@@ -146,7 +146,7 @@ def eigenvector_centrality_in(Graph, n, file_name):
             df['poi_id'] = ec.keys()
             df['eigcen_in'] = ec.values()
             df.to_pickle('%s_eigcen_in_%i.pkl' % (file_name, (i + 1)))
-            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            node = sorted(ec.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
             node_tuple = ('eigcen_in', node[0], amenity)
             rows.append(create_row(node_tuple, Graph, i))
@@ -169,7 +169,7 @@ def eigenvector_centrality_out(Graph, n, file_name):
             df['poi_id'] = ec.keys()
             df['eigcen_out'] = ec.values()
             df.to_pickle('%s_eigcen_out_%i.pkl' % (file_name, (i + 1)))
-            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            node = sorted(ec.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
             node_tuple = ('eigcen_out', node[0], amenity)
             rows.append(create_row(node_tuple, Graph, i))
@@ -192,7 +192,7 @@ def in_degree_centrality(Graph, n, file_name):
             df['poi_id'] = dc.keys()
             df['in_dg_cen'] = dc.values()
             df.to_pickle('%s_in_dg_cen_%i.pkl' % (file_name, (i + 1)))
-            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            node = sorted(dc.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
             node_tuple = ('in_dg_cen', node[0], amenity)
             rows.append(create_row(node_tuple, Graph, i))
@@ -214,7 +214,7 @@ def out_degree_centrality(Graph, n, file_name):
             df['poi_id'] = dc.keys()
             df['out_dg_cen'] = dc.values()
             df.to_pickle('%s_out_dg_cen_%i.pkl' % (file_name, (i + 1)))
-            node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
+            node = sorted(dc.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
             node_tuple = ('out_dg_cen', node[0], amenity)
             rows.append(create_row(node_tuple, Graph, i))
