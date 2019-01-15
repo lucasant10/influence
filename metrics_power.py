@@ -51,6 +51,8 @@ def create_df_ap(In_G, Out_G):
 
 def create_row(node_tuple, Graph, iteration):
     tmp = list()
+    if Graph.has_node('H'):
+        Graph.remove_node('H')
     try:
         tmp.append(iteration)
         tmp.append(node_tuple[0])
