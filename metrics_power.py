@@ -127,7 +127,7 @@ def attract(ap_G, n, file_name):
             node = df.sort_values(['out_attract'], ascending=False).iloc[0][[
                 'out', 'out_amenity']]
             node_tuple = ('attract', node['out'], node['out_amenity'])
-            rows.append(create_row(df, ap_G, i))
+            rows.append(create_row(node_tuple, ap_G, i))
             ap_G = remove_edges(ap_G, node['out'])
         except Exception as e:
             print("Unexpected error: {}".format(e))
@@ -142,9 +142,9 @@ def eigenvector_centrality_in(Graph, n, file_name):
             if Graph.has_node('H'):
                 Graph.remove_node('H')
             ec = nx.eigenvector_centrality_numpy(Graph)
-            columns = ['poi_id', 'eigcen_in']
-            df = pd.DataFrame(
-                [list(ec.keys()), list(ec.values())], columns=columns)
+            df = pd.DataFrame()
+            df['poi_id'] = ec.keys()
+            df['eigcen_in'] = ec.values()
             df.to_pickle('%s_eigcen_in_%i.pkl' % (file_name, (i + 1)))
             node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
@@ -165,8 +165,9 @@ def eigenvector_centrality_out(Graph, n, file_name):
                 Graph.remove_node('H')
             ec = nx.eigenvector_centrality_numpy(Graph.reverse())
             columns = ['poi_id', 'eigcen_out']
-            df = pd.DataFrame(
-                [list(ec.keys()), list(ec.values())], columns=columns)
+            df = pd.DataFrame()
+            df['poi_id'] = ec.keys()
+            df['eigcen_out'] = ec.values()
             df.to_pickle('%s_eigcen_out_%i.pkl' % (file_name, (i + 1)))
             node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
@@ -187,8 +188,9 @@ def in_degree_centrality(Graph, n, file_name):
                 Graph.remove_node('H')
             dc = nx.in_degree_centrality(Graph)
             columns = ['poi_id', 'in_dg_cen']
-            df = pd.DataFrame(
-                [list(dc.keys()), list(dc.values())], columns=columns)
+            df = pd.DataFrame()
+            df['poi_id'] = dc.keys()
+            df['in_dg_cen'] = dc.values()
             df.to_pickle('%s_in_dg_cen_%i.pkl' % (file_name, (i + 1)))
             node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
@@ -208,9 +210,9 @@ def out_degree_centrality(Graph, n, file_name):
             if Graph.has_node('H'):
                 Graph.remove_node('H')
             dc = nx.out_degree_centrality(Graph)
-            columns = ['poi_id', 'out_dg_cen']
-            df = pd.DataFrame(
-                [list(dc.keys()), list(dc.values())], columns=columns)
+            df = pd.DataFrame()
+            df['poi_id'] = dc.keys()
+            df['out_dg_cen'] = dc.values()
             df.to_pickle('%s_out_dg_cen_%i.pkl' % (file_name, (i + 1)))
             node = sorted(s.items(), key=lambda x: x[1], reverse=True)[0]
             amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
