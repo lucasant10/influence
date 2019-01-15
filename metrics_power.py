@@ -72,7 +72,7 @@ def create_row(node_tuple, Graph, iteration):
             tmp.append(0)
         und_G = Graph.to_undirected()
         if nx.is_connected(und_G):
-            tmp.append(nx.diameter())
+            tmp.append(nx.diameter(und_G))
         else:
             tmp.append(0)
     except Exception as e:
