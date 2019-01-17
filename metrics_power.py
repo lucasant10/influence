@@ -226,6 +226,35 @@ def out_degree_centrality(Graph, n, file_name):
             logger.exception(e)
     return rows
 
+def bozzo_franceschet_power(Graph, n, file_name):
+    rows = list()
+    for i in range(n):
+        try:
+            if Graph.has_node('H'):
+                Graph.remove_node('H')
+            adj = nx.to_pandas_adjacency(Graph.to_undirected())
+            # adjacency matrix with values 1 if egde exists
+            adj[adj>0] = 1
+            df_nodes = pd.DataFrame([np.ones(adj.shape[1])], columns=adj.columns)
+            df = bf_power(adj, df_nodes, 5)
+            df.to_pickle('%s_bf_power_%i.pkl' % (file_name, (i + 1)))
+            node = df.sort_values(['power'], ascending=False).loc[0]
+            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
+            node_tuple = ('bf_power', node[0], amenity)
+            rows.append(create_row(node_tuple, Graph, i))
+            Graph = remove_edges(Graph, node[0])
+        except Exception as e:
+            print("Unexpected error: {}".format(e))
+            logger.exception(e)
+    return rows
+
+def bf_power(adj, df_nodes, n):
+    for _ in range(n):
+        values = list()
+        for x in df_nodes.columns:
+            values.append(np.sum(np.repeat(df_nodes[x], df_nodes.shape[1]) / df_nodes.values[0] * adj[x].values))
+        df_nodes = pd.DataFrame([values], columns=df_nodes.columns)
+    return df_nodes.transpose().reset_index().rename({'index':'poi_id',0:'power'},axis=1)
 
 def create_graphs(graph):
     logger.info(">>>>>> Processing graph %s" % graph)
@@ -242,10 +271,12 @@ def create_graphs(graph):
     # row_lines += eigenvector_centrality_in(H.copy(), iter_param, file_name)
     # logger.info(">>>>>> Processing Eig Cen Out for %s" % graph)
     # row_lines += eigenvector_centrality_out(H.copy(), iter_param, file_name)
-    # logger.info(">>>>>> Processing In Dgr Cen for %s" % graph)
+    logger.info(">>>>>> Processing In Dgr Cen for %s" % graph)
     row_lines += in_degree_centrality(H.copy(), iter_param, file_name)
     logger.info(">>>>>> Processing Out Dgr Cen for %s" % graph)
     row_lines += out_degree_centrality(H.copy(), iter_param, file_name)
+    logger.info(">>>>>> Processing BF Power %s" % graph)
+    row_lines += bozzo_franceschet_power(H.copy(), iter_param, file_name)
     logger.info(">>>>>> Saving dataFrame for %s" % file_name)
     df = pd.DataFrame(row_lines, columns=columns)
     df.to_pickle('dg_%s_metrics.pkl' % (file_name))
