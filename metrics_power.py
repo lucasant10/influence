@@ -3,6 +3,7 @@ import datetime
 import logging
 import multiprocessing as mp
 import os
+import configparser
 
 import networkx as nx
 import numpy as np
@@ -68,13 +69,16 @@ def create_row(node_tuple, Graph, iteration):
         tmp.append(nx.number_of_edges(Graph))
         tmp.append(np.mean(list(dict(Graph.out_degree()).values())))
         tmp.append(np.mean(list(dict(Graph.in_degree()).values())))
-        if nx.is_weakly_connected(Graph):
-            tmp.append(nx.average_shortest_path_length(Graph))
+        giant = sorted(nx.strongly_connected_component_subgraphs(Graph), key=len, reverse=True)[0]
+        tmp.append(nx.number_of_nodes(giant))
+        tmp.append(nx.number_of_edges(giant))
+        if nx.is_weakly_connected(giant):
+            tmp.append(nx.average_shortest_path_length(giant))
         else:
             tmp.append(0)
-        und_G = Graph.to_undirected()
-        if nx.is_connected(und_G):
-            tmp.append(nx.diameter(und_G))
+
+        if nx.is_connected(giant):
+            tmp.append(nx.diameter(giant))
         else:
             tmp.append(0)
     except Exception as e:
@@ -91,6 +95,8 @@ def remove_edges(Graph, node):
                 G.remove_edge(e_in, e_out, key=k)
             elif node == e_out:
                 G.remove_edge(e_in, e_out)
+            elif node == e_in:
+                G.remove_edge(e_in, e_out)
     except Exception as e:
         print("Unexpected error: {}".format(e))
         logger.exception(e)
@@ -101,7 +107,7 @@ def support(sp_G, n, file_name):
     rows = list()
     for i in range(n):
         try:
-            sp = power_support_influence(sp_G)
+            sp = power_support_influence(sp_G) 
             ap = power_attract_influence(sp_G)
             df = create_df_sp(sp, ap)
             df['power'] = 'support'
@@ -217,7 +223,7 @@ def out_degree_centrality(Graph, n, file_name):
             df['out_dg_cen'] = dc.values()
             df.to_pickle('%s_out_dg_cen_%i.pkl' % (file_name, (i + 1)))
             node = sorted(dc.items(), key=lambda x: x[1], reverse=True)[0]
-            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]]
+            amenity = nx.get_node_attributes(Graph, 'amenity')[node[0]] 
             node_tuple = ('out_dg_cen', node[0], amenity)
             rows.append(create_row(node_tuple, Graph, i))
             Graph = remove_edges(Graph, node[0])
@@ -262,15 +268,16 @@ def create_graphs(graph):
     file_name = directory + graph.split('.')[0].replace('inf_', '')
     row_lines = list()
     columns = ['iter', 'metric', 'poi_id', 'poi_amenity', 'density', 'strong_cc', 'weak_cc',
-               'num_nodes', 'num_edges', 'avg_in_dg', 'avg_out_dg', 'avg_short_path', 'diamenter']
-    # logger.info(">>>>>> Processing Support for %s" % graph)
-    # row_lines += support(H.copy(), iter_param, file_name)
-    # logger.info(">>>>>> Processing Attract for %s" % graph)
-    # row_lines += attract(H.copy(), iter_param, file_name)
-    # logger.info(">>>>>> Processing Eig Cen In for %s" % graph)
-    # row_lines += eigenvector_centrality_in(H.copy(), iter_param, file_name)
-    # logger.info(">>>>>> Processing Eig Cen Out for %s" % graph)
-    # row_lines += eigenvector_centrality_out(H.copy(), iter_param, file_name)
+               'num_nodes', 'num_edges', 'avg_in_dg', 'avg_out_dg', 'giant_num_nodes', 'giant_num_edges',
+               'giant_avg_short_path', 'giant_diamenter']
+    logger.info(">>>>>> Processing Support for %s" % graph)
+    row_lines += support(H.copy(), iter_param, file_name)
+    logger.info(">>>>>> Processing Attract for %s" % graph)
+    row_lines += attract(H.copy(), iter_param, file_name)
+    logger.info(">>>>>> Processing Eig Cen In for %s" % graph)
+    row_lines += eigenvector_centrality_in(H.copy(), iter_param, file_name)
+    logger.info(">>>>>> Processing Eig Cen Out for %s" % graph)
+    row_lines += eigenvector_centrality_out(H.copy(), iter_param, file_name)
     logger.info(">>>>>> Processing In Dgr Cen for %s" % graph)
     row_lines += in_degree_centrality(H.copy(), iter_param, file_name)
     logger.info(">>>>>> Processing Out Dgr Cen for %s" % graph)
@@ -279,7 +286,7 @@ def create_graphs(graph):
     row_lines += bozzo_franceschet_power(H.copy(), iter_param, file_name)
     logger.info(">>>>>> Saving dataFrame for %s" % file_name)
     df = pd.DataFrame(row_lines, columns=columns)
-    df.to_pickle('dg_%s_metrics.pkl' % (file_name))
+    df.to_pickle('%s_metrics.pkl' % (file_name))
     logger.info(">>>>>> Finished for %s" % graph)
 
 
@@ -307,11 +314,16 @@ if __name__ == "__main__":
     place = args.place
     iter_param = int(args.iterations)
 
-    directory = 'graphs/'
+    cf = configparser.ConfigParser()
+    cf.read("file_path.properties")
+    path = dict(cf.items("file_path"))
+    dataset = path['dataset']
+
+    directory = dataset + 'graphs/'
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    files = ([file for file in os.listdir('graphs') if file.startswith(
+    files = ([file for file in os.listdir(directory) if file.startswith(
         'inf_%s' % place) and file.endswith('.gml')])
 
     workers = (mp.cpu_count()-2)
