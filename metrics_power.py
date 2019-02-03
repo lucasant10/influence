@@ -9,7 +9,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from power_influence import power_attract_influence, power_support_influence
+from influence.power_influence import power_attract_influence, power_support_influence
 
 
 def create_df_sp(In_G, Out_G):
@@ -32,8 +32,8 @@ def create_df_sp(In_G, Out_G):
 
 
 def create_df_ap(In_G, Out_G):
-    columns = ['out', 'out_amenity', 'out_support', 'attract',
-               'out_attract', 'in', 'in_amenity', 'in_support', 'in_attract']
+    columns = ['out', 'out_amenity', 'out_attract', 'out_support','attract'
+    , 'in', 'in_amenity', 'in_attract', 'in_support']
     list_of_lists = list()
     for edge in In_G.edges(data=True):
         tmp = list()
@@ -49,6 +49,27 @@ def create_df_ap(In_G, Out_G):
         list_of_lists.append(tmp)
     return pd.DataFrame(list_of_lists, columns=columns)
 
+def create_df(Graph):
+    columns = ['poi_id', 'power']
+    metric = ''
+    try:
+        list_of_lists = list()
+        for node in Graph.nodes(data=True):
+            tmp = list()
+            tmp.append(node[0])
+            if 'support' in node[1]:
+                tmp.append(node[1]['support'])
+                metric = 'support'
+            elif 'attract' in node[1]:
+                tmp.append(node[1]['attract'])
+                metric = 'attract'
+            list_of_lists.append(tmp)    
+        df = pd.DataFrame(list_of_lists, columns=columns)
+        df['metric']  = metric
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 def create_row(node_tuple, Graph, iteration):
     tmp = list()
@@ -77,7 +98,7 @@ def create_row(node_tuple, Graph, iteration):
         else:
             tmp.append(0)
 
-        if nx.is_connected(giant):
+        if nx.is_connected(giant.to_undirected()):
             tmp.append(nx.diameter(giant))
         else:
             tmp.append(0)
@@ -94,9 +115,9 @@ def remove_edges(Graph, node):
             if node == str(k):
                 G.remove_edge(e_in, e_out, key=k)
             elif node == e_out:
-                G.remove_edge(e_in, e_out)
+                G.remove_edge(e_in, e_out, key=k)
             elif node == e_in:
-                G.remove_edge(e_in, e_out)
+                G.remove_edge(e_in, e_out, key=k)
     except Exception as e:
         print("Unexpected error: {}".format(e))
         logger.exception(e)
@@ -122,6 +143,14 @@ def support(sp_G, n, file_name):
             logger.exception(e)
     return rows
 
+def df_support(sp_G):
+    try:
+        sp = power_support_influence(sp_G) 
+        df = create_df(sp)
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 def attract(ap_G, n, file_name):
     rows = list()
@@ -142,6 +171,14 @@ def attract(ap_G, n, file_name):
             logger.exception(e)
     return rows
 
+def df_attract(ap_G):
+    try:
+        ap = power_attract_influence(ap_G)
+        df = create_df(ap)
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 def eigenvector_centrality_in(Graph, n, file_name):
     rows = list()
@@ -163,6 +200,20 @@ def eigenvector_centrality_in(Graph, n, file_name):
             print("Unexpected error: {}".format(e))
             logger.exception(e)
     return rows
+
+def df_eigenvector_centrality_in(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        ec = nx.eigenvector_centrality_numpy(Graph)
+        df = pd.DataFrame()
+        df['poi_id'] = ec.keys()
+        df['power'] = ec.values()
+        df['metric'] = 'eigcen_in'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 
 def eigenvector_centrality_out(Graph, n, file_name):
@@ -187,6 +238,19 @@ def eigenvector_centrality_out(Graph, n, file_name):
             logger.exception(e)
     return rows
 
+def df_eigenvector_centrality_out(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        ec = nx.eigenvector_centrality_numpy(Graph.reverse())
+        df = pd.DataFrame()
+        df['poi_id'] = ec.keys()
+        df['power'] = ec.values()
+        df['metric'] = 'eigcen_out'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 def in_degree_centrality(Graph, n, file_name):
     rows = list()
@@ -210,6 +274,21 @@ def in_degree_centrality(Graph, n, file_name):
             logger.exception(e)
     return rows
 
+def df_in_degree_centrality(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        dc = nx.in_degree_centrality(Graph)
+        df = pd.DataFrame()
+        df['poi_id'] = dc.keys()
+        df['power'] = dc.values()
+        df['metric'] = 'in_dg_cen'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
+
+
 
 def out_degree_centrality(Graph, n, file_name):
     rows = list()
@@ -232,6 +311,21 @@ def out_degree_centrality(Graph, n, file_name):
             logger.exception(e)
     return rows
 
+def df_out_degree_centrality(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        dc = nx.out_degree_centrality(Graph)
+        df = pd.DataFrame()
+        df['poi_id'] = dc.keys()
+        df['power'] = dc.values()
+        df['metric'] = 'out_dg_cen'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
+
+
 def bozzo_franceschet_power(Graph, n, file_name):
     rows = list()
     for i in range(n):
@@ -253,6 +347,21 @@ def bozzo_franceschet_power(Graph, n, file_name):
             print("Unexpected error: {}".format(e))
             logger.exception(e)
     return rows
+
+def df_bozzo_franceschet_power(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        adj = nx.to_pandas_adjacency(Graph.to_undirected())
+        # adjacency matrix with values 1 if egde exists
+        adj[adj>0] = 1
+        df_nodes = pd.DataFrame([np.ones(adj.shape[1])], columns=adj.columns)
+        df = bf_power(adj, df_nodes, 5)
+        df['metric'] = 'bf_power'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 def bf_power(adj, df_nodes, n):
     for _ in range(n):

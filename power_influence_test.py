@@ -21,6 +21,24 @@ class TestPowerInfluence(unittest.TestCase):
     H.add_edge(3,'H', 2, weight=2)
     H.add_edge(3,'H', 1, weight=6)
 
+    G = nx.MultiDiGraph()
+    G.add_edge('H', 1, 1, weight=8)
+    G.add_edge(1,'H', 1, weight=4)
+    G.add_edge(1, 2, 1, weight=2)
+    G.add_edge(2, 4, 1, weight=2)
+    G.add_edge(4, 5, 1, weight=2)
+    G.add_edge(5, 'H', 1, weight=2)
+    G.add_edge(1, 3, 1, weight=2)
+    G.add_edge(3, 4, 1, weight=2)
+    G.add_edge(4, 5, 1, weight=2)
+    G.add_edge(5, 'H', 1, weight=2)
+    G.add_edge('H', 4, 4, weight=4)
+    G.add_edge(4,'H', 4, weight=2)
+    G.add_edge(4, 5, 4, weight=2)
+    G.add_edge(5, 'H', 4, weight=2)
+    G.add_edge('H', 5, 5, weight=2)
+    G.add_edge(5,'H', 5, weight=2)
+    
     def test_power_support_influence(self):
         G_test = power_support_influence(self.H)
         self.assertAlmostEqual(G_test.node[3]['support'], 0, 2)
@@ -44,6 +62,15 @@ class TestPowerInfluence(unittest.TestCase):
         self.assertAlmostEqual(G_test[1][2][1]['weight'], 0.20, 2)
         self.assertAlmostEqual(G_test[1][3][1]['weight'], 0.40, 2)
         self.assertAlmostEqual(G_test[2][1][2]['weight'], 0.25, 2)
+    
+    def test_power_attract_influence_2(self):
+        G_test = power_attract_influence(self.G)
+        self.assertAlmostEqual(G_test.node[5]['attract'], 3.25, 2)
+        self.assertAlmostEqual(G_test.node[4]['attract'], 2.5, 2)
+        self.assertAlmostEqual(G_test.node[3]['attract'], 0.25, 2)
+        self.assertAlmostEqual(G_test.node[5]['attract'], 0.25, 2)
+        self.assertAlmostEqual(G_test.node[5]['attract'], 0, 2)
+
 
 if __name__ == '__main__':
     unittest.main()

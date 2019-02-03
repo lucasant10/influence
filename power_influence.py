@@ -19,7 +19,7 @@ def power_support_influence(Graph):
         node_tree = list(set(edge_tree + out_dg))
         for ed in node_tree:
             Wij = copy[ed[0]][ed[1]][ed[2]]['weight']
-            Nik = Graph.in_degree(ed[1],'weight')
+            Nik = Graph.in_degree(ed[0],'weight')
             sum_Wij += Wij / Nik
             M.add_edge(ed[0], ed[1], ed[2], weight=(Wij / Nik))
         M.node[node[0]]['support'] = sum_Wij
@@ -53,7 +53,7 @@ def attract_independece(Graph):
     for node in Graph.nodes(data=True):
         total = Graph.in_degree(node[0], 'weight')
         #get the sum of H weight for each edge in node
-        h_weight = sum([x[2] for x in  H.in_edges(node[0],'weight') if x[1]=='H'])
+        h_weight = sum([x[2] for x in  Graph.in_edges(node[0],'weight') if x[0]=='H'])
         node_indepence[node[0]] = (0 if total == 0 else h_weight / total)
     return node_indepence
 
@@ -62,10 +62,12 @@ def support_independece(Graph):
     for node in Graph.nodes(data=True):
         total = Graph.out_degree(node[0], 'weight')
         #get the sum of H weight for each edge in node
-        h_weight = sum([x[2] for x in  H.out_edges(node[0],'weight') if x[1]=='H'])
+        h_weight = sum([x[2] for x in  Graph.out_edges(node[0],'weight') if x[1]=='H'])
         node_indepence[node[0]] = (0 if total == 0 else h_weight / total)
     return node_indepence
 
+def harmonic(value1, value2):
+    return (2 * value1 * value2 / (value1 + value2))
 
 def get_out_degree_edges(G, node):
     tmp = set()
