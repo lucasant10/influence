@@ -2,10 +2,8 @@ import sys
 sys.path.append('../')
 import datetime
 import logging
-import multiprocessing as mp
 import os
 import configparser
-
 import networkx as nx
 import pandas as pd
 import influence.metrics_power as mp
@@ -33,22 +31,24 @@ if __name__ == "__main__":
     directory = path['dartmouth'] + "graphs/"
 
 
-    support = nx.read_gml(directory + 'support_dartmouth_01-10-02.gml')
-    attract = nx.read_gml(directory + 'attract_dartmouth_01-10-02.gml')
-    general = nx.read_gml(directory + "inf_dartmouth_01-10-02.gml")
+    support = nx.read_gml(directory + 'support_dartmouth_02-11-03.gml')
+    attract = nx.read_gml(directory + 'attract_dartmouth_02-11-03.gml')
+    general = nx.read_gml(directory + "inf_dartmouth_02-11-03.gml")
 
     df = mp.create_df(support)
-    df.to_pickle(directory + 'support_dartmouth_01-10-02.pkl')
+    df.to_pickle(directory + 'support_dartmouth_02-11-03.pkl')
     df = mp.create_df(attract)
-    df.to_pickle(directory + 'attract_dartmouth_01-10-02.pkl')
-    df = mp.df_bozzo_franceschet_power(general)
-    df.to_pickle(directory + 'bf_dartmouth_01-10-02.pkl')
-    df = mp.df_eigenvector_centrality_in(general)
-    df.to_pickle(directory + 'eigcen_in_dartmouth_01-10-02.pkl')
-    df = mp.df_eigenvector_centrality_out(general)
-    df.to_pickle(directory + 'eigcen_out_dartmouth_01-10-02.pkl')
-    df = mp.df_in_degree_centrality(general)
-    df.to_pickle(directory + 'dg_cen_in_dartmouth_01-10-02.pkl')
-    df = mp.df_out_degree_centrality(general)
-    df.to_pickle(directory + 'dg_cen_out_dartmouth_01-10-02.pkl')
+    df.to_pickle(directory + 'attract_dartmouth_02-11-03.pkl')
+    df = mp.independence(general)
+    df.to_pickle(directory + 'independence_dartmouth_02-11-03.pkl')
+    # df = mp.df_bozzo_franceschet_power(general)
+    # df.to_pickle(directory + 'bf_dartmouth_02-11-03.pkl')
+    # df = mp.df_eigenvector_centrality_in(general)
+    # df.to_pickle(directory + 'eigcen_in_dartmouth_02-11-03.pkl')
+    # df = mp.df_eigenvector_centrality_out(general)
+    # df.to_pickle(directory + 'eigcen_out_dartmouth_02-11-03.pkl')
+    # df = mp.df_in_degree_centrality(general)
+    # df.to_pickle(directory + 'dg_cen_in_dartmouth_02-11-03.pkl')
+    # df = mp.df_out_degree_centrality(general)
+    # df.to_pickle(directory + 'dg_cen_out_dartmouth_02-11-03.pkl')
     

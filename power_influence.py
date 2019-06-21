@@ -3,8 +3,37 @@ import os
 import numpy as np
 import argparse
 import pandas as pd
+from collections import deque, defaultdict
+
+
+def all_same( items ):
+    return len( set( items ) ) == 1
 
 def power_support_influence(Graph):
+    copy = Graph.copy()
+    if copy.has_node('H'):
+        copy.remove_node('H')
+    M = nx.MultiDiGraph()
+    M.add_nodes_from(copy.nodes(data=True))
+    nx.set_node_attributes(M, 0, 'support')
+    paths = list(set([e[2] for e in copy.edges(keys=True)]))
+    power = defaultdict(float)
+    for path in paths:
+        nodes = path.split("_")
+        tot = 0
+        if not all_same(nodes):
+            # compute the support in bottom up order
+            for i in reversed(range(1, len(nodes))):
+                Wij = copy[nodes[i-1]][nodes[i]][path]['weight']
+                Njk = Graph.in_degree(nodes[i],'weight')
+                tot += Wij / Njk
+                M.add_edge(nodes[i-1], nodes[i], path, weight=(Wij / Njk))
+                power[nodes[i-1]] += tot
+    for node in copy.nodes():
+        M.node[node]['support'] = power[node]
+    return M
+
+def power_support_influence_2(Graph):
     copy = Graph.copy()
     if copy.has_node('H'):
         copy.remove_node('H')
@@ -14,23 +43,46 @@ def power_support_influence(Graph):
     for node in copy.nodes(data=True):
         sum_Wij = 0
         # perform depth first search in each node and compute Power
-        edge_tree = [x for x in list(nx.edge_dfs(copy, node[0])) if (x[2] == node[0]) and (x[1] != node[0])]
+        edges = [x for x in list(copy.edges(keys=True)) if (x[2].split('_')[0] == "%s"%(node[0]))]
         out_dg = list(copy.out_edges(node[0], keys=True))
-        node_tree = list(set(edge_tree + out_dg))
+        node_tree = list(set(edges + out_dg))
         for ed in node_tree:
             Wij = copy[ed[0]][ed[1]][ed[2]]['weight']
-            Nik = Graph.in_degree(ed[0],'weight')
+            Nik = Graph.in_degree(ed[1],'weight')
             sum_Wij += Wij / Nik
             M.add_edge(ed[0], ed[1], ed[2], weight=(Wij / Nik))
         M.node[node[0]]['support'] = sum_Wij
     return M
 
+
 def power_attract_influence(Graph):
     copy = Graph.copy()
     if copy.has_node('H'):
         copy.remove_node('H')
+    M = nx.MultiDiGraph()
+    M.add_nodes_from(copy.nodes(data=True))
+    nx.set_node_attributes(M, 0, 'attract')
+    paths = list(set([e[2] for e in copy.edges(keys=True)]))
+    power = defaultdict(float)
+    for path in paths:
+        nodes = path.split("_")
+        tot = 0
+        if not all_same(nodes):
+            for i in range(1, len(nodes)):
+                Wij = Graph[nodes[i-1]][nodes[i]][path]['weight']
+                Nik = Graph.out_degree(nodes[i-1],'weight')
+                tot += Wij / Nik
+                M.add_edge(nodes[i-1], nodes[i], path, weight=(Wij / Nik))
+                power[nodes[i]] += tot
+    for node in copy.nodes():
+        M.node[node]['attract'] = power[node]
+    return M
+
+def power_attract_influence_2(Graph):
+    copy = Graph.copy()
+    if copy.has_node('H'):
+        copy.remove_node('H')
     #This procedure makes easy to compute out_power
-    copy = copy.reverse()
     M = nx.MultiDiGraph()
     M.add_nodes_from(copy.nodes(data=True))
     nx.set_node_attributes(M, 0, 'attract')
@@ -38,13 +90,15 @@ def power_attract_influence(Graph):
         sum_Wij = 0
         # perform depth first search in each node and compute Power in reverse order.
         #beware! the order of edges could be confusing ex: edge [1][2][1] -> [2][1][1]
-        node_tree = get_out_degree_edges(copy, node[0])
+        edges = [x for x in list(copy.edges(keys=True)) if (x[2].split('_')[1] == "%s"%(node[0]))]
+        in_dg = list(copy.in_edges(node[0], keys=True))
+        node_tree = list(set(edges + in_dg))
         for ed in node_tree:
-            Wij = Graph[ed[1]][ed[0]][ed[2]]['weight']
+            Wij = Graph[ed[0]][ed[1]][ed[2]]['weight']
             #compute out degree do node
-            Nik = Graph.out_degree(ed[1],'weight')
+            Nik = Graph.out_degree(ed[0],'weight')
             sum_Wij += Wij / Nik
-            M.add_edge(ed[1], ed[0], ed[2], weight=(Wij / Nik))
+            M.add_edge(ed[0], ed[1], ed[2], weight=(Wij / Nik))
         M.node[node[0]]['attract'] = sum_Wij
     return M
 
@@ -68,18 +122,6 @@ def support_independece(Graph):
 
 def harmonic(value1, value2):
     return (2 * value1 * value2 / (value1 + value2))
-
-def get_out_degree_edges(G, node):
-    tmp = set()
-    edges = G.out_edges(node, keys=True)
-    #add edges from out_degree (in_degree in orignal graph)
-    tmp.update(edges)
-    for x in edges:
-        #get edges with successors (predecessors in original graph)
-        if x[1]!=x[2]:
-            tmp.update([y for y in list(nx.edge_dfs(G, node)) if (y[2] != node) and y[2]==x[2]])
-    return list(tmp)
-
 
 def write_csv(In_G, Out_G, file_name):
     csv = "in,in_amenity,in_support,in_attract,support,out,out_amenity,out_support,out_attract\n"
@@ -121,4 +163,4 @@ if __name__ == "__main__":
     file_name = graph.replace(".gml", ".csv")
     file_name = file_name.replace("inf", "power")
     print('saving CSV %s' % file_name)
-    write_csv(In_G, Out_G, file_name)
+    #write_csv(In_G, Out_G, file_name)

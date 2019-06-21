@@ -71,6 +71,48 @@ def create_df(Graph):
         print("Unexpected error: {}".format(e))
         logger.exception(e)
 
+
+
+def attract_independece(Graph):
+    node_indepence = dict()
+    for node in Graph.nodes(data=True):
+        total = Graph.in_degree(node[0], 'weight')
+        #get the sum of H weight for each edge in node
+        h_weight = sum([x[2] for x in  Graph.in_edges(node[0],'weight') if x[0]=='H'])
+        node_indepence[node[0]] = (0 if total == 0 else h_weight / total)
+    return node_indepence
+
+def support_independece(Graph):
+    node_indepence = dict()
+    for node in Graph.nodes(data=True):
+        total = Graph.out_degree(node[0], 'weight')
+        #get the sum of H weight for each edge in node
+        h_weight = sum([x[2] for x in  Graph.out_edges(node[0],'weight') if x[1]=='H'])
+        node_indepence[node[0]] = (0 if total == 0 else h_weight / total)
+    return node_indepence
+
+def harmonic(value1, value2):
+    return (0 if (value1 + value2) == 0 else (2 * value1 * value2 / (value1 + value2)))
+
+def independence(Graph):
+    columns = ['poi_id', 'power']
+    metric = 'independence'
+    try:
+        ai = attract_independece(Graph)
+        si = support_independece(Graph)
+        list_of_lists = list()
+        for node in Graph.nodes(data=True):
+            tmp = list()
+            tmp.append(node[0])
+            tmp.append(harmonic(ai[node[0]],si[node[0]]))
+            list_of_lists.append(tmp)    
+        df = pd.DataFrame(list_of_lists, columns=columns)
+        df['metric']  = metric
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
+
 def create_row(node_tuple, Graph, iteration):
     tmp = list()
     if Graph.has_node('H'):
