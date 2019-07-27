@@ -1,16 +1,18 @@
 import configparser
+import logging
+import multiprocessing as mp
 import os
 import networkx as nx
 import pandas as pd
-from . import influence
-import multiprocessing as mp
-from functools import partial
-import logging
+import datetime
+import influence
+
 
 def parallel(directory):
     try:
         logger.info(">>>>>> files from directory: %s" % directory)
-        files = ([file for file in os.listdir(directory) if file.endswith('.pkl')])
+        files = ([file for file in os.listdir(
+            directory) if file.endswith('.pkl')])
         for file in files:
             logger.info(">>>>>> processing file: %s" % file)
             df = pd.read_pickle(directory + file)
@@ -19,7 +21,7 @@ def parallel(directory):
             dir_graphs = directory + 'graphs/'
             if not os.path.exists(dir_graphs):
                 os.makedirs(dir_graphs)
-            graph  = influence.generate_graphs(df,delta_t)
+            graph = influence.generate_graphs(df, delta_t)
             logger.info(">>>>>> saving graph for: %s" % place)
             nx.write_gml(graph, dir_graphs + "inf_%s.gml" % place)
     except Exception as e:
@@ -47,8 +49,8 @@ if __name__ == "__main__":
     cf = configparser.ConfigParser()
     cf.read("file_path.properties")
     path = dict(cf.items("file_path"))
-    
+
     workers = (mp.cpu_count()-1)
     logger.info(">>>>>> number of workes: %i" % workers)
     pool = mp.Pool(processes=(workers))
-    _ = pool.map(parallel, path.values())   
+    _ = pool.map(parallel, path.values())
