@@ -49,7 +49,7 @@ def split(df, splitters):
 def all_same( items ):
     return len( set( items ) ) == 1
 
-def generate_graphs(delta_t, df, t_frame):
+def generate_graphs_frame(delta_t, df, t_frame):
     for group in df.groupby(pd.Grouper(freq=t_frame)):
         # for each time frame
         day_group = group[1]
@@ -132,6 +132,45 @@ def generate_graphs_from_group(group, delta_t):
                 M.add_edges_from(combined_multi_digraphs_edges(M, U))
     print('saving graph %s' % time)
     return (M, time)
+
+def generate_graphs(df, delta_t):
+    M = nx.MultiDiGraph()
+    print('generating graph')
+    #shift day in -6 hours for day start at 6am
+    df.index = df.index-pd.Timedelta(6, unit='h')
+    for _, time_df in df.groupby(pd.Grouper(freq='D')):
+        for name in time_df.user.unique():
+            t_user = time_df[time_df.user == name]
+            #remove consecutive duplicated POIs
+            t_user = t_user.loc[t_user.poi_id.shift() != t_user.poi_id]
+            # Test if the nodes i and j have a time gap less then delta_t
+            diff_t = [True] + list((t_user.iloc[1:,].index - t_user.iloc[:-1,].index).seconds / 3600 <= delta_t )
+            #get index for split dataframe in paths
+            split_index = [i for i, x in enumerate(diff_t) if not x]
+            for path_df in split(t_user, split_index):
+                U = nx.MultiDiGraph()
+                edges = create_edges_path(path_df)
+                U.add_edges_from(edges, weight=0)
+                # sum egde weight
+                for i, j, key in U.edges(keys=True):
+                    #if node i is the 'Home' POI 
+                    if (i == 'H'):
+                    # get impact
+                        imp_f = path_df[path_df.poi_id == j].impact.max()
+                        imp_t = path_df[path_df.poi_id == j].impact.max()
+                    #if node i is the 'Home' POI 
+                    elif (j == 'H'):
+                        imp_f = path_df[path_df.poi_id == i].impact.max()
+                        imp_t = path_df[path_df.poi_id == i].impact.max()
+                    #otherwise is a edge between POI
+                    else:
+                        imp_f = path_df[path_df.poi_id == i].impact.max()
+                        imp_t = path_df[path_df.poi_id == j].impact.max()
+                    # Calculate the uncertainty mean for edge
+                    U[i][j][key]['weight'] += harmonic(imp_f, imp_t)
+                M.add_edges_from(combined_multi_digraphs_edges(M, U))
+    print('saving graph')
+    return M
     
 def create_edges_path(df):
     poi_list = list(df.poi_id)
@@ -233,6 +272,6 @@ if __name__ == "__main__":
         os.makedirs(directory)
     has_files = ([file for file in os.listdir(directory) if file.startswith('inf_%s' % place) and file.endswith('.gml')])
     if not has_files:
-        for M, time in generate_graphs(delta_t, df, t_frame): 
+        for M, time in generate_graphs_from_group([df], delta_t): 
             M = set_amenities(M,df)
             nx.write_gml(M, "graphs/inf_%s_%s.gml" % (place, time))
