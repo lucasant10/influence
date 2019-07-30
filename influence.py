@@ -186,8 +186,8 @@ def create_edges_path(df):
             edges = list(zip(path[0::1], path[1::1]))
             #remove cycle in graph and self_loop
             edges = [x for x in list(edges) if (x[0] != x[1])]
-            #for split_path in split_list(edges, path[0]):
-            key = "_".join(path)
+            #create a key and convert numbers to string
+            key = "_".join(map(str,path))
             for edge in edges:
                 first = path[0]
                 last = path[-1]
