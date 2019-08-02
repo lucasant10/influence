@@ -4,6 +4,7 @@ import multiprocessing as mp
 import os
 import networkx as nx
 import power_influence as power
+import datetime
 
 
 def parallel(directory):
