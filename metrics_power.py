@@ -257,6 +257,33 @@ def df_eigenvector_centrality_in(Graph):
         print("Unexpected error: {}".format(e))
         logger.exception(e)
 
+def df_pagerank(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        pgr = nx.nx.pagerank_numpy(Graph)
+        df = pd.DataFrame()
+        df['poi_id'] = pgr.keys()
+        df['power'] = pgr.values()
+        df['metric'] = 'pagerank'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
+
+def df_betweenness(Graph):
+    try:
+        if Graph.has_node('H'):
+            Graph.remove_node('H')
+        pgr = nx.nx.pagerank_numpy(Graph)
+        df = pd.DataFrame()
+        df['poi_id'] = pgr.keys()
+        df['power'] = pgr.values()
+        df['metric'] = 'betweenness'
+        return df
+    except Exception as e:
+        print("Unexpected error: {}".format(e))
+        logger.exception(e)
 
 def eigenvector_centrality_out(Graph, n, file_name):
     rows = list()
