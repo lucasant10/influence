@@ -9,7 +9,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from influence.power_influence import power_attract_influence, power_support_influence
+from power_influence import power_attract_influence, power_support_influence
 
 
 def create_df_sp(In_G, Out_G):

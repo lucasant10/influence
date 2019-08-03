@@ -3,7 +3,7 @@ import logging
 import multiprocessing as mp
 import os
 import networkx as nx
-import metrics_power as mp
+import metrics_power as metrics
 import datetime
 
 
@@ -24,34 +24,34 @@ def parallel(directory):
             general = nx.read_gml(dir_graph + "inf_%s.gml" % file_name)
 
             logger.info(">>>>>> computing support for %s" % file_name)
-            df = mp.create_df(support)
+            df = metrics.create_df(support)
             df.to_pickle(dir_new + 'support_%s.pkl' % file_name)
             logger.info(">>>>>> computing attract for %s" % file_name)
-            df = mp.create_df(attract)
+            df = metrics.create_df(attract)
             df.to_pickle(dir_new + 'attract_%s.pkl' % file_name)
             logger.info(">>>>>> computing independence for %s" % file_name)
-            df = mp.independence(general)
+            df = metrics.independence(general)
             df.to_pickle(dir_new + 'independence_%s.pkl' % file_name)
             logger.info(">>>>>> computing bf_power for %s" % file_name)
-            df = mp.df_bozzo_franceschet_power(general)
+            df = metrics.df_bozzo_franceschet_power(general)
             df.to_pickle(dir_new + 'bf_%s.pkl' % file_name)
             logger.info(">>>>>> computing eigcen_in for %s" % file_name)
-            df = mp.df_eigenvector_centrality_in(general)
+            df = metrics.df_eigenvector_centrality_in(general)
             df.to_pickle(dir_new + 'eigcen_in_%s.pkl' % file_name)
             logger.info(">>>>>> computing eigcen_out for %s" % file_name)
-            df = mp.df_eigenvector_centrality_out(general)
+            df = metrics.df_eigenvector_centrality_out(general)
             df.to_pickle(dir_new + 'eigcen_out_%s.pkl' % file_name)
             logger.info(">>>>>> computing in_dg for %s" % file_name)
-            df = mp.df_in_degree_centrality(general)
+            df = metrics.df_in_degree_centrality(general)
             df.to_pickle(dir_new + 'dg_cen_in_%s.pkl' % file_name)
             logger.info(">>>>>> computing out_dg for %s" % file_name)
-            df = mp.df_out_degree_centrality(general)
+            df = metrics.df_out_degree_centrality(general)
             df.to_pickle(dir_new + 'dg_cen_out_%s.pkl' % file_name)
             logger.info(">>>>>> computing pagerank for %s" % file_name)
-            df = mp.df_pagerank(general)
+            df = metrics.df_pagerank(general)
             df.to_pickle(dir_new + 'pagerank_%s.pkl' % file_name)
             logger.info(">>>>>> computing betweeness for %s" % file_name)
-            df = mp.df_betweenness(general)
+            df = metrics.df_betweenness(general)
             df.to_pickle(dir_new + 'betweeness_%s.pkl' % file_name)
     except Exception as e:
         print("Unexpected error: {}".format(e))
