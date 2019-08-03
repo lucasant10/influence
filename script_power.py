@@ -14,6 +14,8 @@ def parallel(directory):
         files = ([file for file in os.listdir(
             directory) if (file.startswith('inf_') and file.endswith('.gml'))])
         for file in files:
+            logger.info(">>>>>> loading %s" % file)
+            H = nx.read_gml(directory + file)
             logger.info(">>>>>> computing support power %s" % file)
             support = power.power_support_influence(H)
             file_name = file.replace("inf", "support")
