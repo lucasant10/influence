@@ -22,7 +22,7 @@ def parallel(directory):
                 child) if file.endswith('.pkl')])
             files.sort()
             dic = dict()
-            if files:
+            if len(files) > 3:
                 for file in files:
                     df = pd.read_pickle(file)
                     dic[df.iloc[1].values[2]] = df.sort_values([df.columns[1]], ascending=False)[
