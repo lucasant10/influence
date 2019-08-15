@@ -7,7 +7,8 @@ from matplotlib import pyplot as pl
 import seaborn as sns
 import logging
 import datetime
-
+import configparser
+import multiprocessing as mp
 
 def parallel(directory):
     try:
