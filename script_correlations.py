@@ -6,6 +6,7 @@ import matplotlib
 from matplotlib import pyplot as pl
 import seaborn as sns
 import logging
+import datetime
 
 
 def parallel(directory):
