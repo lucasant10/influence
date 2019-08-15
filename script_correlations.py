@@ -25,7 +25,7 @@ def parallel(directory):
             dic = dict()
             if len(files) > 3:
                 for file in files:
-                    df = pd.read_pickle(file)
+                    df = pd.read_pickle(child + file)
                     dic[df.iloc[1].values[2]] = df.sort_values([df.columns[1]], ascending=False)[
                         'poi_id'][:10].values
                 df_rnk = pd.DataFrame.from_dict(dic, orient='index').reset_index()
