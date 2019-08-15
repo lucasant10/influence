@@ -1,5 +1,4 @@
-from scipy.stats
-import kendalltau
+from scipy.stats import kendalltau
 import os
 import pandas as pd
 import numpy as np
