@@ -29,18 +29,17 @@ def parallel(directory):
                     dic[df.iloc[1].values[2]] = df.sort_values([df.columns[1]], ascending=False)[
                         'poi_id'][:10].values
                 df_rnk = pd.DataFrame.from_dict(dic, orient='index').reset_index()
+                df_rnk.to_csv(child + 'matrix_{}.csv'.format(place), sep=",")
 
                 mat = np.zeros((df_rnk.shape[0], df_rnk.shape[0]))
                 for i in range(df_rnk.shape[0]):
                     for j in range(df_rnk.shape[0]):
                         mat[i, j] = round(kendalltau(
-                            df_rnk.iloc[i][1:11], df_rnk.iloc[j][1:11])[0], 2)
-                np.savetxt(child + 'matrix_{}.csv'.format(place),
-                        mat, delimiter=",")
+                            df_rnk.iloc[i][1:], df_rnk.iloc[j][1:])[0], 2)
 
                 mask = np.zeros_like(mat, dtype=np.bool)
                 mask[np.triu_indices_from(mask, k=1)] = True
-                f, ax = pl.subplots(figsize=(10, 8))
+                f, ax = pl.subplots(figsize=(15, 10))
                 sns.heatmap(mat, mask=mask, cmap="RdBu", square=True,
                             ax=ax, vmin=-1, annot=True, annot_kws={"size": 15})
                 ax.set_yticklabels(df_rnk['index'].values,
