@@ -5,6 +5,7 @@ from subprocess import call
 import logging
 import datetime
 import multiprocessing as mp
+import os
 
 
 
@@ -15,6 +16,9 @@ def parallel(directory):
             directory) if (file.endswith('.pkl'))])
         for file in files:
             city = file.replace('.pkl', '')
+            tw_bool = False
+            if(city.startswith("poi_tw")):
+                tw_bool = True
 
             logger.info(">>>>>> Processing city: %s" % city)
             call([
@@ -22,7 +26,7 @@ def parallel(directory):
                 'indepence_hash.py',
                 '-p', city,
                 '-d', directory,
-                '-t', (city.startswith("poi_tw"))
+                '-t', str(tw_bool)
             ])
            
     except Exception as e:
@@ -44,6 +48,7 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     logger.addHandler(consoleHandler)
     
+    cf = configparser.ConfigParser()
     cf.read("../file_path.properties")
     path = dict(cf.items("file_path"))
     workers = (3)

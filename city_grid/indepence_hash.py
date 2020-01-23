@@ -25,7 +25,7 @@ def colorFader(mix=0):
 
 if __name__ == "__main__":
 
-   try:
+    try:
         parser = argparse.ArgumentParser(
             description='Plot City Independence Grid')
         parser.add_argument('-p', '--place', required=True)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         if tw_bool:
             city_name.replace('poi_tw_', '')
 
-        city = ox.gdf_from_place(city_name)
+        city = ox.gdf_from_place(city_name, which_result=2)
         df = pd.read_pickle(directory + "%s.pkl" % city_name)
         df2 = pd.read_pickle(
             directory + ("{0}/independence_{0}.pkl".format(city_name)))
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         df3 = pd.merge(df, df2, on='poi_id', how="left")
 
         df3['geohash'] = df3.apply(lambda x: gh.encode(
-            x['lat'], x['long'], precision=6), axis=1)
+            x['lat'], x['lon'], precision=6), axis=1)
         df_geo = df3.groupby("geohash").agg("power").sum().reset_index()
 
         geo_list = hs.geohashes(city.iloc[0].geometry, precision=6)
@@ -67,6 +67,5 @@ if __name__ == "__main__":
                 (row['total']/higher)), linewidth=0, alpha=0.7))
 
         fig.savefig(directory + "{0}/{0}_indep_grid.png".format(city_name))
-
     except Exception as e:
         print(e)
