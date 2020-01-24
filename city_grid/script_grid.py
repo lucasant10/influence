@@ -16,17 +16,12 @@ def parallel(directory):
             directory) if (file.endswith('.pkl'))])
         for file in files:
             city = file.replace('.pkl', '')
-            tw_bool = False
-            if(city.startswith("poi_tw")):
-                tw_bool = True
-
             logger.info(">>>>>> Processing city: %s" % city)
             call([
                 'python',
-                'indepence_hash.py',
+                'independence_hash.py',
                 '-p', city,
-                '-d', directory,
-                '-t', str(tw_bool)
+                '-d', directory
             ])
            
     except Exception as e:
