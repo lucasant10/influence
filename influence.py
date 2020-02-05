@@ -263,6 +263,9 @@ if __name__ == "__main__":
 
     df = pd.read_pickle(file)
     df['amenity'] = df.amenity.fillna("")
+    users = df.groupby('user').count()['impact']
+    #remove users wiht less than 10 messages and top 10 users (outliers)
+    df = df[df.user.isin(users[users > 10].sort_values()[:-10].index)]
     inf_list = list()
     delta_t = 6
     #t_frame = 'W-MON'
